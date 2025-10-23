@@ -6,13 +6,15 @@ export class IndexStackNode {
     documentPath: string; // Added property for the full document path
     children: IndexStack;
     listType: string; // Added property
-    constructor(depth: number, text: string, listType: string = "unordered") {
+    taskStatus: string; // Added property for task list status ([ ] or [x])
+    constructor(depth: number, text: string, listType: string = "unordered", taskStatus: string = "") {
         this.depth = depth;
         this.text = text;
         this.blockId = ""; // Initialize
         this.documentPath = ""; // Initialize
         this.children = new IndexStack();
         this.listType = listType;
+        this.taskStatus = taskStatus; // Initialize
     }
 }
 
