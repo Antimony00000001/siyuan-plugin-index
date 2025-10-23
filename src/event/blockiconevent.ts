@@ -169,21 +169,43 @@ async function getRootDoc(id:string){
 
 async function createDoc(notebookId:string,hpath:string){
 
+    // 1. Check if a document with the given hpath already exists
 
+    let existingDocResponse = await client.sql({
 
-    let response = await client.createDocWithMd({
-
-        markdown: "",
-
-        notebook: notebookId,
-
-        path: hpath
+        stmt: `SELECT id FROM blocks WHERE hpath = '${hpath}' AND type = 'd' AND box = '${notebookId}'`
 
     });
 
-    return response.data;
 
 
+    if (existingDocResponse.data && existingDocResponse.data.length > 0) {
+
+        // Document already exists, return its ID
+
+        console.log(`createDoc: Document already exists at path ${hpath}, ID: ${existingDocResponse.data[0].id}`);
+
+        return existingDocResponse.data[0].id;
+
+    } else {
+
+        // Document does not exist, create a new one
+
+        let response = await client.createDocWithMd({
+
+            markdown: "",
+
+            notebook: notebookId,
+
+            path: hpath
+
+        });
+
+        console.log(`createDoc: Created new document at path ${hpath}, ID: ${response.data}`);
+
+        return response.data;
+
+    }
 
 }
 
