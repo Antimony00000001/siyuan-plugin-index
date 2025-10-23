@@ -1,5 +1,5 @@
+import { insertDataSimple } from "../creater/createIndex";
 import { IndexStackNode, IndexStack } from "../indexnode";
-import { insertAfter } from "../creater/createIndex";
 import { settings } from "../settings";
 import { client, i18n } from "../utils";
 
@@ -38,36 +38,110 @@ async function parseBlockDOM(detail: any) {
     indexStack.notebookId = detail.protyle.notebookId;
     let docId = detail.blockElements[0].getAttribute("data-node-id");
     let block = detail.blockElements[0].childNodes;
+    let blockElement = detail.blockElements[0];
+    let initialListType = "unordered"; // Default
+    if (blockElement.getAttribute('data-type') == "NodeList") {
+        let listData = JSON.parse(blockElement.getAttribute('data-listdata') || '{}');
+        if (listData.Typ === 1) {
+            initialListType = "ordered";
+        } else if (listData.Typ === 3) {
+            initialListType = "task";
+        }
+    }
     indexStack.basePath = await getRootDoc(docId);
     let docData = await client.getBlockInfo({
         id: detail.protyle.block.rootID
     });
     // let docData = await getParentDoc(detail.protyle.block.rootID);
     indexStack.pPath = docData.data.path.slice(0, -3);
-    await parseChildNodes(block,indexStack);
+    await parseChildNodes(block,indexStack,0,initialListType);
     await stackPopAll(indexStack);
-    await insertAfter(indexStack.notebookId,docId,docData.data.path);
-    // window.location.reload();
+
+    // Generate markdown from the indexStack
+    let generatedMarkdown = generateMarkdownFromIndexStack(indexStack);
+
+    // Insert the generated markdown into the document
+    if (generatedMarkdown !== '') {
+        await insertDataSimple(docId, generatedMarkdown);
+    } else {
+        client.pushErrMsg({
+            msg: i18n.errorMsg_miss,
+            timeout: 3000
+        });
+    }
 }
 
-async function parseChildNodes(childNodes: any,pitem:IndexStack, tab = 0) {
+// New function to generate markdown from IndexStack
+function generateMarkdownFromIndexStack(stack: IndexStack, indentLevel: number = 0): string {
+    let markdown = "";
+    let tempStack = new IndexStack();
+
+    // Pop all items from the original stack and push to tempStack to reverse order
+    while (!stack.isEmpty()) {
+        tempStack.push(stack.pop());
+    }
+
+    let orderedListCounters: { [key: number]: number } = {}; // To keep track of ordered list numbers per level
+
+    while (!tempStack.isEmpty()) {
+        let item = tempStack.pop();
+
+        let prefix = "";
+        for (let i = 0; i < indentLevel; i++) {
+            prefix += "    "; // 4 spaces for indentation
+        }
+
+        if (item.listType === "ordered") {
+            if (!orderedListCounters[indentLevel]) {
+                orderedListCounters[indentLevel] = 1;
+            }
+            prefix += `${orderedListCounters[indentLevel]}. `;
+            orderedListCounters[indentLevel]++;
+        } else if (item.listType === "task") {
+            prefix += "- [ ] "; // Task list item
+        } else { // unordered
+            prefix += "- "; // Unordered list item
+        }
+
+        markdown += `${prefix}📄 [${item.text}](siyuan://blocks/${item.blockId})\n`;
+
+        if (!item.children.isEmpty()) {
+            markdown += generateMarkdownFromIndexStack(item.children, indentLevel + 1);
+        }
+    }
+    return markdown;
+}
+
+async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 0, parentListType: string) {
     tab++;
-    let newItem: IndexStack;
     for (const childNode of childNodes) {
         if (childNode.getAttribute('data-type') == "NodeListItem") {
             let sChildNodes = childNode.childNodes;
+            let itemText = "";
+            let subListNodes = [];
+
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
-                    //获取文档标题
-                    let text = window.Lute.BlockDOM2Content(sChildNode.innerHTML);
-                    // console.log(text);
-                    //创建文档
-                    let item = new IndexStackNode(tab,text);
-                    pitem.push(item);
-                    newItem = item.children;
+                    itemText = window.Lute.BlockDOM2Content(sChildNode.innerHTML);
                 } else if (sChildNode.getAttribute('data-type') == "NodeList") {
-                    await parseChildNodes(sChildNode.childNodes,newItem,tab); 
+                    subListNodes.push(sChildNode);
                 }
+            }
+
+            // Create the IndexStackNode for the current list item
+            let item = new IndexStackNode(tab, itemText, parentListType);
+            currentStack.push(item);
+
+            // Recursively process sub-lists, passing the children stack of the current item
+            for (const subListNode of subListNodes) {
+                let subListType = "unordered"; // Default for sub-list
+                let subListData = JSON.parse(subListNode.getAttribute('data-listdata') || '{}');
+                if (subListData.Typ === 1) {
+                    subListType = "ordered";
+                } else if (subListData.Typ === 3) {
+                    subListType = "task";
+                }
+                await parseChildNodes(subListNode.childNodes, item.children, tab, subListType);
             }
         }
     }
@@ -123,14 +197,14 @@ async function stackPopAll(stack:IndexStack){
         
         let subPath = stack.basePath+"/"+text;
 
-        item.path = await createDoc(indexStack.notebookId, subPath);
-        item.path = stack.pPath + "/" + item.path
+        let createdBlockId = await createDoc(indexStack.notebookId, subPath);
+        item.blockId = createdBlockId;
+        item.documentPath = stack.pPath + "/" + createdBlockId;
         temp.push(item);
         if(!item.children.isEmpty()){
             item.children.basePath = subPath;
-            item.children.pPath = item.path;
-            // await stackPopAll(item.children);
-            stackPopAll(item.children); //可能更快
+            item.children.pPath = item.documentPath;
+            stackPopAll(item.children);
         }
     }
     temp.pPath = stack.pPath;
@@ -158,7 +232,7 @@ async function stackPopAll(stack:IndexStack){
 // async function requestChangeSort(paths:any[],notebook:string){
 //     await fetchSyncPost(
 //         "/api/filetree/changeSort",
-//         {
+//         {r
 //             paths: paths,
 //             notebook: notebook
 //         }

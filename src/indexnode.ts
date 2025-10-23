@@ -2,12 +2,17 @@
 export class IndexStackNode {
     depth: number;
     text: string;
-    path: string;
+    blockId: string; // Added property for Siyuan block ID
+    documentPath: string; // Added property for the full document path
     children: IndexStack;
-    constructor(depth: number, text: string) {
+    listType: string; // Added property
+    constructor(depth: number, text: string, listType: string = "unordered") {
         this.depth = depth;
         this.text = text;
+        this.blockId = ""; // Initialize
+        this.documentPath = ""; // Initialize
         this.children = new IndexStack();
+        this.listType = listType;
     }
 }
 

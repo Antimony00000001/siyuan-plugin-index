@@ -1,0 +1,277 @@
+{
+  "ID": "20251023232540-71acw43",
+  "Type": "NodeList",
+  "ListData": {
+    "Typ": 1
+  },
+  "Properties": {
+    "id": "20251023232540-71acw43",
+    "updated": "20251023232540"
+  },
+  "Children": [
+    {
+      "ID": "20251023232540-9eybw7o",
+      "Type": "NodeListItem",
+      "ListData": {
+        "Typ": 1,
+        "Delimiter": 46,
+        "Marker": "MS4=",
+        "Num": 1
+      },
+      "Properties": {
+        "id": "20251023232540-9eybw7o",
+        "updated": "20251023232540"
+      },
+      "Children": [
+        {
+          "ID": "20251023232540-vspo3nc",
+          "Type": "NodeParagraph",
+          "Properties": {
+            "id": "20251023232540-vspo3nc",
+            "updated": "20251023232540"
+          },
+          "Children": [
+            {
+              "Type": "NodeText",
+              "Data": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "ID": "20251023232540-8hm8gs8",
+      "Type": "NodeListItem",
+      "ListData": {
+        "Typ": 1,
+        "Delimiter": 46,
+        "Marker": "Mi4=",
+        "Num": 2
+      },
+      "Properties": {
+        "id": "20251023232540-8hm8gs8",
+        "updated": "20251023232540"
+      },
+      "Children": [
+        {
+          "ID": "20251023232540-3mqz0o8",
+          "Type": "NodeParagraph",
+          "Properties": {
+            "id": "20251023232540-3mqz0o8",
+            "updated": "20251023232540"
+          },
+          "Children": [
+            {
+              "Type": "NodeText",
+              "Data": "2"
+            }
+          ]
+        },
+        {
+          "ID": "20251023232540-urn0850",
+          "Type": "NodeList",
+          "ListData": {
+            "Typ": 3
+          },
+          "Properties": {
+            "id": "20251023232540-urn0850",
+            "updated": "20251023232540"
+          },
+          "Children": [
+            {
+              "ID": "20251023232540-xbweivz",
+              "Type": "NodeListItem",
+              "ListData": {
+                "Typ": 3,
+                "BulletChar": 42,
+                "Marker": "Kg=="
+              },
+              "Properties": {
+                "id": "20251023232540-xbweivz",
+                "updated": "20251023232540"
+              },
+              "Children": [
+                {
+                  "Type": "NodeTaskListItemMarker"
+                },
+                {
+                  "ID": "20251023232540-cw9oyjo",
+                  "Type": "NodeParagraph",
+                  "Properties": {
+                    "id": "20251023232540-cw9oyjo",
+                    "updated": "20251023232540"
+                  },
+                  "Children": [
+                    {
+                      "Type": "NodeText",
+                      "Data": "21"
+                    }
+                  ]
+                },
+                {
+                  "ID": "20251023232540-yljqb64",
+                  "Type": "NodeList",
+                  "ListData": {
+                    "Typ": 1
+                  },
+                  "Properties": {
+                    "id": "20251023232540-yljqb64",
+                    "updated": "20251023232540"
+                  },
+                  "Children": [
+                    {
+                      "ID": "20251023232540-1s3qgvd",
+                      "Type": "NodeListItem",
+                      "ListData": {
+                        "Typ": 1,
+                        "Delimiter": 46,
+                        "Marker": "MS4=",
+                        "Num": 1
+                      },
+                      "Properties": {
+                        "id": "20251023232540-1s3qgvd",
+                        "updated": "20251023232540"
+                      },
+                      "Children": [
+                        {
+                          "ID": "20251023232540-6tyvlwf",
+                          "Type": "NodeParagraph",
+                          "Properties": {
+                            "id": "20251023232540-6tyvlwf",
+                            "updated": "20251023232540"
+                          },
+                          "Children": [
+                            {
+                              "Type": "NodeText",
+                              "Data": "211"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "ID": "20251023232540-ltp3jkp",
+                      "Type": "NodeListItem",
+                      "ListData": {
+                        "Typ": 1,
+                        "Delimiter": 46,
+                        "Marker": "Mi4=",
+                        "Num": 2
+                      },
+                      "Properties": {
+                        "id": "20251023232540-ltp3jkp",
+                        "updated": "20251023232540"
+                      },
+                      "Children": [
+                        {
+                          "ID": "2siyuan023232540-rhab99r",
+                          "Type": "NodeParagraph",
+                          "Properties": {
+                            "id": "20251023232540-rhab99r",
+                            "updated": "20251023232540"
+                          },
+                          "Children": [
+                            {
+                              "Type": "NodeText",
+                              "Data": "212"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "ID": "20251023232540-nj1771x",
+              "Type": "NodeListItem",
+              "ListData": {
+                "Typ": 3,
+                "BulletChar": 42,
+                "Marker": "Kg=="
+              },
+              "Properties": {
+                "id": "20251023232540-nj1771x",
+                "updated": "20251023232540"
+              },
+              "Children": [
+                {
+                  "Type": "NodeTaskListItemMarker"
+                },
+                {
+                  "ID": "20251023232540-tqhzv6q",
+                  "Type": "NodeParagraph",
+                  "Properties": {
+                    "id": "20251023232540-tqhzv6q",
+                    "updated": "20251023232540"
+                  },
+                  "Children": [
+                    {
+                      "Type": "NodeText",
+                      "Data": "22"
+                    }
+                  ]
+                },
+                {
+                  "ID": "20251023232540-q313c37",
+                  "Type": "NodeList",
+                  "ListData": {},
+                  "Properties": {
+                    "id": "20251023232540-q313c37",
+                    "updated": "20251023232540"
+                  },
+                  "Children": [
+                    {
+                      "ID": "20251023232540-oxn4gj5",
+                      "Type": "NodeListItem",
+                      "ListData": {
+                        "BulletChar": 42,
+                        "Marker": "Kg=="
+                      },
+                      "Properties": {
+                        "id": "20251023232540-oxn4gj5",
+                        "updated": "20251023232540"
+                      },
+                      "Children": [
+                        {
+                          "ID": "20251023232540-hhdvflw",
+                          "Type": "NodeParagraph",
+                          "Properties": {
+                            "id": "20251023232540-hhdvflw",
+                            "updated": "20251023232540"
+                          },
+                          "Children": [
+                            {
+                              "Type": "NodeText",
+                              "Data": "222"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+列表 4 (ID: 20251023232540-71acw43)
+这是一个有序列表 (ListData: {"Typ": 1})。
+
+它包含 2 个列表项 (NodeListItem)：
+
+列表项 1：(Num: 1) 内容为文本 "1"。
+
+列表项 2：(Num: 2) 内容为文本 "2"，并且包含一个子列表 (NodeList)。
+
+这个子列表是一个任务列表 (ListData: {"Typ": 3}), 包含 "21" 和 "22" 两项任务。
+
+"21" 任务项下包含一个孙列表，这是一个有序列表 (ListData: {"Typ": 1}), 内容为 "211" 和 "212"。
+
+"22" 任务项下包含一个孙列表，这是一个无序列表 (ListData: {}), 内容为 "222"。
