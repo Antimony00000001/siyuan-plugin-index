@@ -169,11 +169,17 @@ async function getRootDoc(id:string){
 
 async function createDoc(notebookId:string,hpath:string){
 
+    // Escape single quotes in hpath for SQL query
+
+    const escapedHpath = hpath.replace(/'/g, "''");
+
+
+
     // 1. Check if a document with the given hpath already exists
 
     let existingDocResponse = await client.sql({
 
-        stmt: `SELECT id FROM blocks WHERE hpath = '${hpath}' AND type = 'd' AND box = '${notebookId}'`
+        stmt: `SELECT id FROM blocks WHERE hpath = '${escapedHpath}' AND type = 'd' AND box = '${notebookId}'`
 
     });
 
