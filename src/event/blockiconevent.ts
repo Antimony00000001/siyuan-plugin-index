@@ -58,6 +58,7 @@ async function parseBlockDOM(detail: any) {
 
     // Call the new function to reconstruct the markdown for the list
     let reconstructedMarkdown = await reconstructListMarkdownWithLinks(detail.blockElements[0], indexStack);
+    console.log("parseBlockDOM: reconstructedMarkdown:\n", reconstructedMarkdown); // Added log
 
     // Update the original list block with the reconstructed markdown
     if (reconstructedMarkdown !== '') {
@@ -155,118 +156,60 @@ async function getRootDoc(id:string){
 
 
 
-/**
-
- * 创建文档
-
- * @param notebookId 笔记本id
-
- * @param hpath 文档路径
-
- * @returns 响应内容
-
- */
-
 async function createDoc(notebookId:string,hpath:string){
-
-    // Escape single quotes in hpath for SQL query
-
+    // 1. Check if a document with the given hpath already exists
     const escapedHpath = hpath.replace(/'/g, "''");
 
-
-
-    // 1. Check if a document with the given hpath already exists
-
     let existingDocResponse = await client.sql({
-
         stmt: `SELECT id FROM blocks WHERE hpath = '${escapedHpath}' AND type = 'd' AND box = '${notebookId}'`
-
     });
 
-
-
     if (existingDocResponse.data && existingDocResponse.data.length > 0) {
-
         // Document already exists, return its ID
-
         console.log(`createDoc: Document already exists at path ${hpath}, ID: ${existingDocResponse.data[0].id}`);
-
         return existingDocResponse.data[0].id;
-
     } else {
+        // Add a small delay before creating a new document
+        await new Promise(resolve => setTimeout(resolve, 50)); // 50ms delay
 
         // Document does not exist, create a new one
-
         let response = await client.createDocWithMd({
-
             markdown: "",
-
             notebook: notebookId,
-
             path: hpath
-
         });
-
         console.log(`createDoc: Created new document at path ${hpath}, ID: ${response.data}`);
-
         return response.data;
-
     }
-
 }
 
-
-
 /**
-
  * 全部出栈
-
  * @param stack 目录栈
-
  */
-
 async function stackPopAll(stack:IndexStack){
-
-    // Iterate directly over the stack's internal array to update items in place
-
-    for (const item of stack.stack) {
+    // Iterate over the stack's internal array in reverse order to update items in place
+    for (let i = stack.stack.length - 1; i >= 0; i--) { // Iterate in reverse
+        const item = stack.stack[i]; // Get item by index
 
         let text = item.text;
 
-
-
         // if(hasEmoji(text.slice(0,2))){
-
         //     text = text.slice(3);
-
         // }
-
         
-
         let subPath = stack.basePath+"/"+text;
 
-
-
         let createdBlockId = await createDoc(indexStack.notebookId, subPath);
-
         item.blockId = createdBlockId;
-
         item.documentPath = stack.pPath + "/" + createdBlockId;
 
-
-
         if(!item.children.isEmpty()){
-
             item.children.basePath = subPath;
-
             item.children.pPath = item.documentPath;
-
             await stackPopAll(item.children); // Await recursive calls
-
         }
-
     }
-
 }
 
 
