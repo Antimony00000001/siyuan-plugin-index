@@ -2,7 +2,7 @@ import { insertDataSimple } from "../creater/createIndex";
 import { IndexStackNode, IndexStack } from "../indexnode";
 import { settings } from "../settings";
 import { client, i18n } from "../utils";
-import { getSubdocIcon } from "../creater/createIndex";
+import { getProcessedDocIcon } from "../creater/createIndex";
 
 //目录栈
 let indexStack : IndexStack;
@@ -13,12 +13,10 @@ let indexStack : IndexStack;
  * @returns void
  */
 export function buildDoc({ detail }: any) {
-    console.log("buildDoc: Function called.");
     //如果选中块大于1或不是列表块或未开启按钮，则直接结束
     if (detail.blockElements.length > 1 || 
         detail.blockElements[0].getAttribute('data-type') != "NodeList" ||
         !settings.get("docBuilder")) {
-        console.log("buildDoc: Initial checks failed. Returning.");
         return;
     }
     //插入按钮到块菜单
@@ -36,11 +34,9 @@ export function buildDoc({ detail }: any) {
  * @param detail 
  */
 async function parseBlockDOM(detail: any) {
-    console.log("parseBlockDOM: Function called.");
     indexStack = new IndexStack();
     indexStack.notebookId = detail.protyle.notebookId;
     let docId = detail.blockElements[0].getAttribute("data-node-id");
-    console.log(`parseBlockDOM: Processing docId: ${docId}`);
     let block = detail.blockElements[0].childNodes;
     let blockElement = detail.blockElements[0];
 
@@ -51,7 +47,6 @@ async function parseBlockDOM(detail: any) {
     } else if (subType === 't') {
         initialListType = "task";
     }
-    console.log(`parseBlockDOM: Initial list type: ${initialListType}`);
     indexStack.basePath = await getRootDoc(docId);
     // We still need docData for pPath, so let's get it separately
     let docDataForPath = await client.getBlockInfo({
@@ -137,16 +132,14 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
             let existingSubFileCount = 0;
 
             if (existingBlockId) {
-                console.log(`parseChildNodes: Found existingBlockId: ${existingBlockId} for item: ${itemText}`);
                 let blockAttrs = await client.getBlockAttrs({ id: existingBlockId });
                 if (blockAttrs && blockAttrs.data) {
                     existingIcon = blockAttrs.data.icon || "";
-                    console.log(`parseChildNodes: Retrieved existing icon from attrs: '${existingIcon}'`);
+                    console.log(`[Gemini-20251024-1] parseChildNodes: Fetched existingIcon for ${existingBlockId}: '${existingIcon}'`);
                 }
                 let blockInfo = await client.getBlockInfo({ id: existingBlockId });
                 if (blockInfo && blockInfo.data) {
                     existingSubFileCount = blockInfo.data.subFileCount || 0;
-                    console.log(`parseChildNodes: Retrieved existing subFileCount from info: ${existingSubFileCount}`);
                 }
             }
 
@@ -160,7 +153,6 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                 }
             }
             let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId);
-            currentStack.push(item);
             currentStack.push(item);
 
             // Recursively process sub-lists, passing the children stack of the current item
@@ -221,7 +213,6 @@ async function createDoc(notebookId:string,hpath:string){
 
     if (existingDocResponse.data && existingDocResponse.data.length > 0) {
         // Document already exists, return its ID
-        console.log(`createDoc: Document already exists at path ${hpath}, ID: ${existingDocResponse.data[0].id}`);
         return existingDocResponse.data[0].id;
     } else {
         // Add a small delay before creating a new document
@@ -233,7 +224,6 @@ async function createDoc(notebookId:string,hpath:string){
             notebook: notebookId,
             path: hpath
         });
-        console.log(`createDoc: Created new document at path ${hpath}, ID: ${response.data}`);
         return response.data;
     }
 }
@@ -246,6 +236,7 @@ async function stackPopAll(stack:IndexStack){
     // Iterate over the stack's internal array in reverse order to update items in place
     for (let i = stack.stack.length - 1; i >= 0; i--) { // Iterate in reverse
         const item = stack.stack[i]; // Get item by index
+        console.log(`[Gemini-20251024-1] stackPopAll: Processing item: ${item.text}, Block ID: ${item.blockId}`);
 
         let text = item.text;
 
@@ -264,35 +255,38 @@ async function stackPopAll(stack:IndexStack){
 
         // Fetch block info to get icon and subFileCount
         let blockAttrs = await client.getBlockAttrs({ id: currentBlockId });
+        console.log(`[Gemini-20251024-1] stackPopAll: blockAttrs for ${item.text} (${currentBlockId}):`, blockAttrs);
         if (blockAttrs && blockAttrs.data) {
             item.icon = blockAttrs.data.icon || ''; // Ensure it's a string
-            console.log(`stackPopAll: Fetched icon from attrs for ${item.text}: '${item.icon}'`);
         }
         let blockInfo = await client.getBlockInfo({ id: currentBlockId });
+        console.log(`[Gemini-20251024-1] stackPopAll: blockInfo for ${item.text} (${currentBlockId}):`, blockInfo);
         if (blockInfo && blockInfo.data) {
             item.subFileCount = blockInfo.data.subFileCount || 0;
-            console.log(`stackPopAll: Fetched subFileCount from info for ${item.text}: ${item.subFileCount}`);
         }
+        console.log(`[Gemini-20251024-1] stackPopAll: Initial item.icon for ${item.text}: '${item.icon}'`);
 
-        // Determine the display icon. Only update if the existing icon is a default one or empty.
+        // Determine the display icon.
         const defaultDocIcon = "📄";
         const defaultFolderIcon = "📑";
 
+        // Determine the display icon. Only update if the existing icon is a default one or empty.
+
         // Check if the current icon is one of the default icons or empty
         if (item.icon === '' || item.icon === defaultDocIcon || item.icon === defaultFolderIcon) {
-            const displayIcon = getSubdocIcon(item.icon, item.subFileCount !== 0);
+            console.log(`[Gemini-20251024-1] stackPopAll: Calling getProcessedDocIcon with icon='${item.icon}', hasChild=${item.subFileCount !== 0} for ${item.text}`);
+            const displayIcon = getProcessedDocIcon(item.icon, item.subFileCount !== 0);
+            console.log(`[Gemini-20251024-1] stackPopAll: getProcessedDocIcon returned '${displayIcon}' for ${item.text}`);
             if (displayIcon && displayIcon !== item.icon) { // Only update if different from current
-                console.log(`stackPopAll: Updating icon for ${item.text} from '${item.icon}' to '${displayIcon}'`);
+                console.log(`[Gemini-20251024-1] stackPopAll: Updating icon for ${item.text} from '${item.icon}' to '${displayIcon}'`);
                 await client.setBlockAttrs({
                     id: item.blockId,
                     attrs: { icon: displayIcon }
                 });
+                console.log(`[Gemini-20251024-1] stackPopAll: client.setBlockAttrs successful for ${item.text} with icon '${displayIcon}'`);
                 item.icon = displayIcon; // Update item.icon to reflect the change
-            } else {
-                console.log(`stackPopAll: No icon update needed for ${item.text}. Current: '${item.icon}', Proposed: '${displayIcon}'`);
+                console.log(`[Gemini-20251024-1] stackPopAll: Item icon updated for ${item.text} to '${item.icon}'`);
             }
-        } else {
-            console.log(`stackPopAll: Preserving custom icon for ${item.text}: '${item.icon}'`);
         }
 
         if(!item.children.isEmpty()){
@@ -320,7 +314,7 @@ async function stackPopAll(stack:IndexStack){
  */
 
 async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement, currentStack: IndexStack, indentLevel: number = 0, orderedListCounters: { [key: number]: number } = {}): Promise<string> {
-    console.log(`reconstructListMarkdownWithLinks: Function called for indentLevel: ${indentLevel}`);
+    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: ${indentLevel}`);
     let markdown = "";
 
     const originalListItems = originalListElement.children;
@@ -384,8 +378,12 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                         prefix += "- ";
 
                     }
-
-                    let iconPrefix = `${getSubdocIcon(correspondingIndexNode.icon, correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0)} `;
+                    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for ${itemText}: '${correspondingIndexNode.icon}'`);
+                    const gdcIconInput = correspondingIndexNode.icon;
+                    const gdcHasChildInput = correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0;
+                    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='${gdcIconInput}', hasChild=${gdcHasChildInput}`);
+                    let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
+                    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for ${itemText}: '${iconPrefix.trim()}'`);
                     markdown += `${prefix}${iconPrefix}[${itemText}](siyuan://blocks/${correspondingIndexNode.blockId})\n`;
 
 
@@ -409,7 +407,7 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
         }
 
     }
-    console.log(`reconstructListMarkdownWithLinks: Generated markdown for indentLevel ${indentLevel}:\n${markdown}`);
+    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel ${indentLevel}:\n${markdown}`);
     return markdown;
 
 }

@@ -357,8 +357,7 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
 
 
 //获取图标
-export function getSubdocIcon(icon: string, hasChild: boolean) {
-    // console.log("getSubdocIcon", icon, 'hasChild', hasChild);
+export function getProcessedDocIcon(icon: string, hasChild: boolean) {
     if (icon == '' || icon == undefined) {
         return hasChild ? "📑" : "📄";
     } else if (icon.indexOf(".") != -1) {
@@ -372,16 +371,24 @@ export function getSubdocIcon(icon: string, hasChild: boolean) {
     } else if (icon.includes("api/icon/getDynamicIcon")) {
         return `![](${icon})`;
     } else {
+        // If it's not a hex string, and not a URL, and not a file extension, assume it's a direct emoji.
+        // This is a heuristic, as a robust emoji check is complex.
+        if (!/^[0-9a-fA-F-]+$/.test(icon) && !icon.includes("http://") && !icon.includes("https://") && icon.length <= 4) { 
+             console.log(`[Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '${icon}'`);
+             return icon;
+        }
+
         let result = "";
         for (const element of icon.split("-")) {
             const codePoint = parseInt(element, 16);
             if (isNaN(codePoint)) {
                 // If any part is not a valid hex, return default icons
+                console.log(`[Gemini-20251024-1] getProcessedDocIcon: parseInt failed for element '${element}', returning default.`);
                 return hasChild ? "📑" : "📄";
             }
             result += String.fromCodePoint(codePoint);
         }
-        // console.log("getSubdocIcon result", result);
+        console.log(`[Gemini-20251024-1] getProcessedDocIcon: For icon '${icon}', final result: '${result}'`);
         return result;
     }
 }

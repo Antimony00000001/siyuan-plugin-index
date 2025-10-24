@@ -1,53 +1,21 @@
-2plugin:siyuan-plugins-index:5311 * 📑 [1](siyuan://blocks/20251024153456-hjqv6s0)
-    * 📄 [11](siyuan://blocks/20251024153457-8jga7af)
-    * 📄 [12](siyuan://blocks/20251024153457-h7zsc3m)
-    * 📄 [13](siyuan://blocks/20251024153456-svaaw1o)
+✓ 0 modules transformed.
+[commonjs] Transform failed with 2 errors:
+D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:274:14: ERROR: The symbol "defaultDocIcon" has already been declared
+D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:275:14: ERROR: The symbol "defaultFolderIcon" has already been declared
+file: D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:274:14
 
-plugin:siyuan-plugins-index:5311 * 😃 [1](siyuan://blocks/20251024153456-hjqv6s0)
-    * 📄 [11](siyuan://blocks/20251024153457-8jga7af)
-    * 📄 [12](siyuan://blocks/20251024153457-h7zsc3m)
-    * 📄 [13](siyuan://blocks/20251024153456-svaaw1o)
+The symbol "defaultDocIcon" has already been declared
+272|
+273|          // Determine the display icon. Only update if the existing icon is a default one or empty.
+274|          const defaultDocIcon = "📄";
+   |                ^
+275|          const defaultFolderIcon = "📑";
+276|
 
-2plugin:siyuan-plugins-index:8358 buildDoc: Function called.
-plugin:siyuan-plugins-index:8372 parseBlockDOM: Function called.
-plugin:siyuan-plugins-index:8376 parseBlockDOM: Processing docId: 20251024153443-si2jqp1
-plugin:siyuan-plugins-index:8386 parseBlockDOM: Initial list type: unordered
-plugin:siyuan-plugins-index:8498 createDoc: Document already exists at path /测试列表/对比测试/1, ID: 20251024153456-hjqv6s0
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 1, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 1 from '' to '📄'
-plugin:siyuan-plugins-index:8498 createDoc: Document already exists at path /测试列表/对比测试/1/13, ID: 20251024153456-svaaw1o
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 13, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 13 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 13, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 13 from '' to '📄'
-plugin:siyuan-plugins-index:8498 createDoc: Document already exists at path /测试列表/对比测试/1/12, ID: 20251024153457-h7zsc3m
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 12, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 12 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 12, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 12 from '' to '📄'
-plugin:siyuan-plugins-index:8498 createDoc: Document already exists at path /测试列表/对比测试/1/11, ID: 20251024153457-8jga7af
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 11, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 11 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 11, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 11 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 1, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 1 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 13, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 13 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 13, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 13 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 12, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 12 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 12, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 12 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 11, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 11 from '' to '📄'
-plugin:siyuan-plugins-index:8528 stackPopAll: Fetched block info for 11, icon: '', subFileCount: 0
-plugin:siyuan-plugins-index:8535 stackPopAll: Updating icon for 11 from '' to '📄'
-plugin:siyuan-plugins-index:8555 reconstructListMarkdownWithLinks: Function called for indentLevel: 0
-plugin:siyuan-plugins-index:8593 reconstructListMarkdownWithLinks: Generated markdown for indentLevel 0:
-
-plugin:siyuan-plugins-index:5311 * 📑 [1](siyuan://blocks/20251024153456-hjqv6s0)
-    * 📄 [11](siyuan://blocks/20251024153457-8jga7af)
-    * 📄 [12](siyuan://blocks/20251024153457-h7zsc3m)
-    * 📄 [13](siyuan://blocks/20251024153456-svaaw1o)
+The symbol "defaultFolderIcon" has already been declared
+273|          // Determine the display icon. Only update if the existing icon is a default one or empty.
+274|          const defaultDocIcon = "📄";
+275|          const defaultFolderIcon = "📑";
+   |                ^
+276|
+277|          // Check if the current icon is one of the default icons or empty
