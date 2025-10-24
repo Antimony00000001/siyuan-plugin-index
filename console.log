@@ -1,94 +1,10 @@
-IndexPlugin onload
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: Processing item: 1, Block ID: 
-plugin:siyuan-plugins-index:8540 [Gemini-20251024-1] stackPopAll: blockInfo for 1 (20251024172146-y9rk217): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:3585  POST http://127.0.0.1:6806/api/attr/getBlockAttrs 401 (Unauthorized)
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3585
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:3591 HTTP error! status: 401
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3591
-await in getBlockAttributesRaw
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:8542 [Gemini-20251024-1] stackPopAll: blockAttrsResponse for 1 (20251024172146-y9rk217): null
-plugin:siyuan-plugins-index:8551 [Gemini-20251024-1] stackPopAll: Initial item.icon for 1: '📄'
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: Processing item: 12, Block ID: 
-plugin:siyuan-plugins-index:8540 [Gemini-20251024-1] stackPopAll: blockInfo for 12 (20251024172210-4j2f6ry): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:3585  POST http://127.0.0.1:6806/api/attr/getBlockAttrs 401 (Unauthorized)
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3585
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-stackPopAll @ plugin:siyuan-plugins-index:8555
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:3591 HTTP error! status: 401
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3591
-await in getBlockAttributesRaw
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-stackPopAll @ plugin:siyuan-plugins-index:8555
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:8542 [Gemini-20251024-1] stackPopAll: blockAttrsResponse for 12 (20251024172210-4j2f6ry): null
-plugin:siyuan-plugins-index:8551 [Gemini-20251024-1] stackPopAll: Initial item.icon for 12: '📄'
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: Processing item: 11, Block ID: 
-plugin:siyuan-plugins-index:8540 [Gemini-20251024-1] stackPopAll: blockInfo for 11 (20251024172146-t8b7toi): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:3585  POST http://127.0.0.1:6806/api/attr/getBlockAttrs 401 (Unauthorized)
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3585
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-stackPopAll @ plugin:siyuan-plugins-index:8555
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:3591 HTTP error! status: 401
-getBlockAttributesRaw @ plugin:siyuan-plugins-index:3591
-await in getBlockAttributesRaw
-stackPopAll @ plugin:siyuan-plugins-index:8541
-await in stackPopAll
-stackPopAll @ plugin:siyuan-plugins-index:8555
-await in stackPopAll
-parseBlockDOM @ plugin:siyuan-plugins-index:8422
-await in parseBlockDOM
-click @ plugin:siyuan-plugins-index:8399
-(anonymous) @ main.38ed9ce5b69e5a8cbec2.js:292
-plugin:siyuan-plugins-index:8542 [Gemini-20251024-1] stackPopAll: blockAttrsResponse for 11 (20251024172146-t8b7toi): null
-plugin:siyuan-plugins-index:8551 [Gemini-20251024-1] stackPopAll: Initial item.icon for 11: '📄'
-plugin:siyuan-plugins-index:8560 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 0
-plugin:siyuan-plugins-index:8587 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 1: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
-plugin:siyuan-plugins-index:5549 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8592 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 1: '📄'
-plugin:siyuan-plugins-index:8560 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 1
-plugin:siyuan-plugins-index:8587 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 11: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
-plugin:siyuan-plugins-index:5549 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8592 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 11: '📄'
-plugin:siyuan-plugins-index:8587 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 12: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
-plugin:siyuan-plugins-index:5549 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8592 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 12: '📄'
-plugin:siyuan-plugins-index:8604 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 1:
-    - 📄 [11](siyuan://blocks/20251024172146-t8b7toi)
-    - 📄 [12](siyuan://blocks/20251024172210-4j2f6ry)
-
-plugin:siyuan-plugins-index:8604 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 0:
-- 📄 [1](siyuan://blocks/20251024172146-y9rk217)
-    - 📄 [11](siyuan://blocks/20251024172146-t8b7toi)
-    - 📄 [12](siyuan://blocks/20251024172210-4j2f6ry)
+> - [一级标题1](siyuan://blocks/20251024230658-ieu8ue9)
+>
+>   - [3423432](siyuan://blocks/20251024230807-w2kqcot)
+> - [标题](siyuan://blocks/20251024230808-hi8k9mf)
+>
+>   - [43143](siyuan://blocks/20251024230813-y7nja7l)
+>
+>     - [425245](siyuan://blocks/20251024230818-jr2k6fp)
+>
+>       - [3423432](siyuan://blocks/20251024230821-mt4px2a)

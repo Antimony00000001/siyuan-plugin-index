@@ -365,7 +365,8 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                     console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='${gdcIconInput}', hasChild=${gdcHasChildInput}`);
                     let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
                     console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for ${itemText}: '${iconPrefix.trim()}'`);
-                    markdown += `${prefix}${iconPrefix}[${itemText}](siyuan://blocks/${correspondingIndexNode.blockId})\n`;
+                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${correspondingIndexNode.blockId}) ${itemText}
+`;
 
 
 
