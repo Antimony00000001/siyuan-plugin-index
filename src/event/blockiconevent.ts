@@ -128,20 +128,15 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     taskStatus = "[ ]";
                 }
             }
-            let existingIcon = "";
             let existingSubFileCount = 0;
 
             if (existingBlockId) {
-                let blockAttrs = await client.getBlockAttrs({ id: existingBlockId });
-                if (blockAttrs && blockAttrs.data) {
-                    existingIcon = blockAttrs.data.icon || "";
-                    console.log(`[Gemini-20251024-1] parseChildNodes: Fetched existingIcon for ${existingBlockId}: '${existingIcon}'`);
-                }
                 let blockInfo = await client.getBlockInfo({ id: existingBlockId });
                 if (blockInfo && blockInfo.data) {
                     existingSubFileCount = blockInfo.data.subFileCount || 0;
                 }
             }
+            let existingIcon = existingSubFileCount > 0 ? "📑" : "📄"; // Initialize with default folder/page icon
 
             // Create the IndexStackNode for the current list item
             if (currentItemType === "task") {
@@ -254,40 +249,14 @@ async function stackPopAll(stack:IndexStack){
         item.documentPath = stack.pPath + "/" + currentBlockId;
 
         // Fetch block info to get icon and subFileCount
-        let blockAttrs = await client.getBlockAttrs({ id: currentBlockId });
-        console.log(`[Gemini-20251024-1] stackPopAll: blockAttrs for ${item.text} (${currentBlockId}):`, blockAttrs);
-        if (blockAttrs && blockAttrs.data) {
-            item.icon = blockAttrs.data.icon || ''; // Ensure it's a string
-        }
         let blockInfo = await client.getBlockInfo({ id: currentBlockId });
         console.log(`[Gemini-20251024-1] stackPopAll: blockInfo for ${item.text} (${currentBlockId}):`, blockInfo);
         if (blockInfo && blockInfo.data) {
             item.subFileCount = blockInfo.data.subFileCount || 0;
         }
+        // Determine the display icon based on subFileCount
+        item.icon = item.subFileCount > 0 ? "📑" : "📄";
         console.log(`[Gemini-20251024-1] stackPopAll: Initial item.icon for ${item.text}: '${item.icon}'`);
-
-        // Determine the display icon.
-        const defaultDocIcon = "📄";
-        const defaultFolderIcon = "📑";
-
-        // Determine the display icon. Only update if the existing icon is a default one or empty.
-
-        // Check if the current icon is one of the default icons or empty
-        if (item.icon === '' || item.icon === defaultDocIcon || item.icon === defaultFolderIcon) {
-            console.log(`[Gemini-20251024-1] stackPopAll: Calling getProcessedDocIcon with icon='${item.icon}', hasChild=${item.subFileCount !== 0} for ${item.text}`);
-            const displayIcon = getProcessedDocIcon(item.icon, item.subFileCount !== 0);
-            console.log(`[Gemini-20251024-1] stackPopAll: getProcessedDocIcon returned '${displayIcon}' for ${item.text}`);
-            if (displayIcon && displayIcon !== item.icon) { // Only update if different from current
-                console.log(`[Gemini-20251024-1] stackPopAll: Updating icon for ${item.text} from '${item.icon}' to '${displayIcon}'`);
-                await client.setBlockAttrs({
-                    id: item.blockId,
-                    attrs: { icon: displayIcon }
-                });
-                console.log(`[Gemini-20251024-1] stackPopAll: client.setBlockAttrs successful for ${item.text} with icon '${displayIcon}'`);
-                item.icon = displayIcon; // Update item.icon to reflect the change
-                console.log(`[Gemini-20251024-1] stackPopAll: Item icon updated for ${item.text} to '${item.icon}'`);
-            }
-        }
 
         if(!item.children.isEmpty()){
             item.children.basePath = subPath;
