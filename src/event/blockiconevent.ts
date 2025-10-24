@@ -13,10 +13,12 @@ let indexStack : IndexStack;
  * @returns void
  */
 export function buildDoc({ detail }: any) {
+    console.log("buildDoc: Function called.");
     //如果选中块大于1或不是列表块或未开启按钮，则直接结束
     if (detail.blockElements.length > 1 || 
         detail.blockElements[0].getAttribute('data-type') != "NodeList" ||
         !settings.get("docBuilder")) {
+        console.log("buildDoc: Initial checks failed. Returning.");
         return;
     }
     //插入按钮到块菜单
@@ -34,9 +36,11 @@ export function buildDoc({ detail }: any) {
  * @param detail 
  */
 async function parseBlockDOM(detail: any) {
+    console.log("parseBlockDOM: Function called.");
     indexStack = new IndexStack();
     indexStack.notebookId = detail.protyle.notebookId;
     let docId = detail.blockElements[0].getAttribute("data-node-id");
+    console.log(`parseBlockDOM: Processing docId: ${docId}`);
     let block = detail.blockElements[0].childNodes;
     let blockElement = detail.blockElements[0];
 
@@ -47,7 +51,7 @@ async function parseBlockDOM(detail: any) {
     } else if (subType === 't') {
         initialListType = "task";
     }
-
+    console.log(`parseBlockDOM: Initial list type: ${initialListType}`);
     indexStack.basePath = await getRootDoc(docId);
     // We still need docData for pPath, so let's get it separately
     let docDataForPath = await client.getBlockInfo({
@@ -129,7 +133,33 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     taskStatus = "[ ]";
                 }
             }
-            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, "", 0, existingBlockId);
+            let existingIcon = "";
+            let existingSubFileCount = 0;
+
+            if (existingBlockId) {
+                console.log(`parseChildNodes: Found existingBlockId: ${existingBlockId} for item: ${itemText}`);
+                let blockAttrs = await client.getBlockAttrs({ id: existingBlockId });
+                if (blockAttrs && blockAttrs.data) {
+                    existingIcon = blockAttrs.data.icon || "";
+                    console.log(`parseChildNodes: Retrieved existing icon from attrs: '${existingIcon}'`);
+                }
+                let blockInfo = await client.getBlockInfo({ id: existingBlockId });
+                if (blockInfo && blockInfo.data) {
+                    existingSubFileCount = blockInfo.data.subFileCount || 0;
+                    console.log(`parseChildNodes: Retrieved existing subFileCount from info: ${existingSubFileCount}`);
+                }
+            }
+
+            // Create the IndexStackNode for the current list item
+            if (currentItemType === "task") {
+                const taskMarkerElement = childNode.querySelector('[data-type="NodeTaskListItemMarker"]');
+                if (taskMarkerElement && taskMarkerElement.getAttribute('data-task') === 'true') {
+                    taskStatus = "[x]";
+                } else {
+                    taskStatus = "[ ]";
+                }
+            }
+            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId);
             currentStack.push(item);
             currentStack.push(item);
 
@@ -233,24 +263,36 @@ async function stackPopAll(stack:IndexStack){
         item.documentPath = stack.pPath + "/" + currentBlockId;
 
         // Fetch block info to get icon and subFileCount
-        let blockInfo = await client.getBlockInfo({
-            id: currentBlockId
-        });
+        let blockAttrs = await client.getBlockAttrs({ id: currentBlockId });
+        if (blockAttrs && blockAttrs.data) {
+            item.icon = blockAttrs.data.icon || ''; // Ensure it's a string
+            console.log(`stackPopAll: Fetched icon from attrs for ${item.text}: '${item.icon}'`);
+        }
+        let blockInfo = await client.getBlockInfo({ id: currentBlockId });
         if (blockInfo && blockInfo.data) {
-            item.icon = blockInfo.data.icon;
-            item.subFileCount = blockInfo.data.subFileCount;
+            item.subFileCount = blockInfo.data.subFileCount || 0;
+            console.log(`stackPopAll: Fetched subFileCount from info for ${item.text}: ${item.subFileCount}`);
         }
 
-        // Determine the display icon and explicitly set it
-        const currentIcon = item.icon || ''; // Use existing icon or empty string
-        const currentSubFileCount = item.subFileCount || 0; // Use existing subFileCount or 0
-        const displayIcon = getSubdocIcon(currentIcon, currentSubFileCount != 0);
+        // Determine the display icon. Only update if the existing icon is a default one or empty.
+        const defaultDocIcon = "📄";
+        const defaultFolderIcon = "📑";
 
-        if (displayIcon) {
-            await client.setBlockAttrs({
-                id: item.blockId,
-                attrs: { icon: displayIcon }
-            });
+        // Check if the current icon is one of the default icons or empty
+        if (item.icon === '' || item.icon === defaultDocIcon || item.icon === defaultFolderIcon) {
+            const displayIcon = getSubdocIcon(item.icon, item.subFileCount !== 0);
+            if (displayIcon && displayIcon !== item.icon) { // Only update if different from current
+                console.log(`stackPopAll: Updating icon for ${item.text} from '${item.icon}' to '${displayIcon}'`);
+                await client.setBlockAttrs({
+                    id: item.blockId,
+                    attrs: { icon: displayIcon }
+                });
+                item.icon = displayIcon; // Update item.icon to reflect the change
+            } else {
+                console.log(`stackPopAll: No icon update needed for ${item.text}. Current: '${item.icon}', Proposed: '${displayIcon}'`);
+            }
+        } else {
+            console.log(`stackPopAll: Preserving custom icon for ${item.text}: '${item.icon}'`);
         }
 
         if(!item.children.isEmpty()){
@@ -278,7 +320,7 @@ async function stackPopAll(stack:IndexStack){
  */
 
 async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement, currentStack: IndexStack, indentLevel: number = 0, orderedListCounters: { [key: number]: number } = {}): Promise<string> {
-
+    console.log(`reconstructListMarkdownWithLinks: Function called for indentLevel: ${indentLevel}`);
     let markdown = "";
 
     const originalListItems = originalListElement.children;
@@ -367,7 +409,7 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
         }
 
     }
-
+    console.log(`reconstructListMarkdownWithLinks: Generated markdown for indentLevel ${indentLevel}:\n${markdown}`);
     return markdown;
 
 }
