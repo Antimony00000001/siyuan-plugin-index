@@ -2,6 +2,7 @@ import { insertDataSimple } from "../creater/createIndex";
 import { IndexStackNode, IndexStack } from "../indexnode";
 import { settings } from "../settings";
 import { client, i18n } from "../utils";
+import { getSubdocIcon } from "../creater/createIndex";
 
 //目录栈
 let indexStack : IndexStack;
@@ -204,6 +205,15 @@ async function stackPopAll(stack:IndexStack){
         item.blockId = createdBlockId;
         item.documentPath = stack.pPath + "/" + createdBlockId;
 
+        // Fetch block info to get icon and subFileCount
+        let blockInfo = await client.getBlockInfo({
+            id: createdBlockId
+        });
+        if (blockInfo && blockInfo.data) {
+            item.icon = blockInfo.data.icon;
+            item.subFileCount = blockInfo.data.subFileCount;
+        }
+
         if(!item.children.isEmpty()){
             item.children.basePath = subPath;
             item.children.pPath = item.documentPath;
@@ -294,7 +304,8 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
 
                     }
 
-                    markdown += `${prefix}((${correspondingIndexNode.blockId} '${itemText}'))\n`;
+                    let iconPrefix = `${getSubdocIcon(correspondingIndexNode.icon, correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0)} `;
+                    markdown += `${prefix}${iconPrefix}[${itemText}](siyuan://blocks/${correspondingIndexNode.blockId})\n`;
 
 
 
