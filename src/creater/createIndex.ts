@@ -373,9 +373,14 @@ export function getSubdocIcon(icon: string, hasChild: boolean) {
         return `![](${icon})`;
     } else {
         let result = "";
-        icon.split("-").forEach(element => {
-            result += String.fromCodePoint(parseInt(element, 16))
-        });
+        for (const element of icon.split("-")) {
+            const codePoint = parseInt(element, 16);
+            if (isNaN(codePoint)) {
+                // If any part is not a valid hex, return default icons
+                return hasChild ? "📑" : "📄";
+            }
+            result += String.fromCodePoint(codePoint);
+        }
         // console.log("getSubdocIcon result", result);
         return result;
     }
