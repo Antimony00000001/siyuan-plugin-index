@@ -4,6 +4,14 @@ import { settings } from "../settings";
 import { client, i18n } from "../utils";
 import { getProcessedDocIcon } from "../creater/createIndex";
 
+// Helper to strip icon prefixes from text
+const stripIconPrefix = (text: string) => {
+    // Matches leading emojis (like 📑, 📄) or :word: patterns
+    // Also matches `[<anything>](siyuan://blocks/<id>) ` pattern to catch previously generated links with icons
+    const iconOrLinkRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|\[.*?\]\(siyuan:\/\/blocks\/.*?\))\s*/;
+    return text.replace(iconOrLinkRegex, '').trim();
+};
+
 //目录栈
 let indexStack : IndexStack;
 
@@ -83,14 +91,6 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
             let itemText = "";
             let existingBlockId = ""; // New variable to store existing block ID
             let subListNodes = [];
-
-            // Helper to strip icon prefixes from text
-            const stripIconPrefix = (text: string) => {
-                // Matches leading emojis (like 📑, 📄) or :word: patterns
-                // Also matches `[<anything>](siyuan://blocks/<id>) ` pattern to catch previously generated links with icons
-                const iconOrLinkRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|\[.*?\]\(siyuan:\/\/blocks\/.*?\))\s*/;
-                return text.replace(iconOrLinkRegex, '').trim();
-            };
 
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
@@ -241,10 +241,7 @@ async function stackPopAll(stack:IndexStack){
         
         let subPath = stack.basePath+"/"+text;
 
-        let currentBlockId = item.blockId; // Use existing blockId if available
-        if (!currentBlockId) {
-            currentBlockId = await createDoc(indexStack.notebookId, subPath);
-        }
+        let currentBlockId = await createDoc(indexStack.notebookId, subPath);
         item.blockId = currentBlockId;
         item.documentPath = stack.pPath + "/" + currentBlockId;
 
@@ -310,7 +307,8 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
 
             if (paragraphElement) {
 
-                const itemText = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
+                let itemText = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
+                itemText = stripIconPrefix(itemText); // Apply the same stripping as in parseChildNodes
 
 
 

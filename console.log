@@ -1,21 +1,15 @@
-✓ 0 modules transformed.
-[commonjs] Transform failed with 2 errors:
-D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:274:14: ERROR: The symbol "defaultDocIcon" has already been declared
-D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:275:14: ERROR: The symbol "defaultFolderIcon" has already been declared
-file: D:/Desktop/index-siyuan/siyuan-plugins-index/src/event/blockiconevent.ts:274:14
-
-The symbol "defaultDocIcon" has already been declared
-272|
-273|          // Determine the display icon. Only update if the existing icon is a default one or empty.
-274|          const defaultDocIcon = "📄";
-   |                ^
-275|          const defaultFolderIcon = "📑";
-276|
-
-The symbol "defaultFolderIcon" has already been declared
-273|          // Determine the display icon. Only update if the existing icon is a default one or empty.
-274|          const defaultDocIcon = "📄";
-275|          const defaultFolderIcon = "📑";
-   |                ^
-276|
-277|          // Check if the current icon is one of the default icons or empty
+IndexPlugin onload
+plugin:siyuan-plugins-index:8509 [Gemini-20251024-1] stackPopAll: Processing item: 1, Block ID: 
+plugin:siyuan-plugins-index:8516 [Gemini-20251024-1] stackPopAll: blockInfo for 1 (20251024172146-y9rk217): {code: 0, msg: '', data: {…}}
+plugin:siyuan-plugins-index:8521 [Gemini-20251024-1] stackPopAll: Initial item.icon for 1: '📄'
+plugin:siyuan-plugins-index:8509 [Gemini-20251024-1] stackPopAll: Processing item: 12, Block ID: 
+plugin:siyuan-plugins-index:8516 [Gemini-20251024-1] stackPopAll: blockInfo for 12 (20251024172210-4j2f6ry): {code: 0, msg: '', data: {…}}
+plugin:siyuan-plugins-index:8521 [Gemini-20251024-1] stackPopAll: Initial item.icon for 12: '📄'
+plugin:siyuan-plugins-index:8509 [Gemini-20251024-1] stackPopAll: Processing item: 11, Block ID: 
+plugin:siyuan-plugins-index:8516 [Gemini-20251024-1] stackPopAll: blockInfo for 11 (20251024172146-t8b7toi): {code: 0, msg: '', data: {…}}
+plugin:siyuan-plugins-index:8521 [Gemini-20251024-1] stackPopAll: Initial item.icon for 11: '📄'
+plugin:siyuan-plugins-index:8530 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 0
+plugin:siyuan-plugins-index:8542 Uncaught (in promise) ReferenceError: stripIconPrefix is not defined
+    at reconstructListMarkdownWithLinks (plugin:siyuan-plugins-index:8542:9)
+    at parseBlockDOM (plugin:siyuan-plugins-index:8395:37)
+    at async Object.click (plugin:siyuan-plugins-index:8371:7)
