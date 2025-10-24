@@ -9,10 +9,10 @@ export class IndexStackNode {
     taskStatus: string; // Added property for task list status ([ ] or [x])
     icon: string;
     subFileCount: number;
-    constructor(depth: number, text: string, listType: string = "unordered", taskStatus: string = "", icon: string = "", subFileCount: number = 0) {
+    constructor(depth: number, text: string, listType: string = "unordered", taskStatus: string = "", icon: string = "", subFileCount: number = 0, blockId: string = "") {
         this.depth = depth;
         this.text = text;
-        this.blockId = ""; // Initialize
+        this.blockId = blockId; // Initialize with provided blockId or empty string
         this.documentPath = ""; // Initialize
         this.children = new IndexStack();
         this.listType = listType;

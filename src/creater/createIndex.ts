@@ -185,8 +185,22 @@ export async function insertAuto(notebookId: string, path: string, parentId: str
 
         //载入配置
         let str = ial.data["custom-index-create"];
-        // console.log(str);
-        settings.loadSettings(JSON.parse(str));
+        if (str) { // Only parse if str is not undefined or null
+            try {
+                settings.loadSettings(JSON.parse(str));
+            } catch (e) {
+                console.error("Error parsing custom-index-create settings:", e);
+                // Optionally, push an error message to the user
+                client.pushErrMsg({
+                    msg: i18n.errorMsg_settingsParseError,
+                    timeout: 3000
+                });
+                return; // Stop execution if settings are invalid
+            }
+        } else {
+            // If no custom settings, use defaults or handle as appropriate
+            console.log("No custom-index-create settings found, using defaults.");
+        }
         if (!settings.get("autoUpdate")) {
             return;
         }

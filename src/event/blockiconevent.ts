@@ -59,7 +59,6 @@ async function parseBlockDOM(detail: any) {
 
     // Call the new function to reconstruct the markdown for the list
     let reconstructedMarkdown = await reconstructListMarkdownWithLinks(detail.blockElements[0], indexStack);
-    console.log("parseBlockDOM: reconstructedMarkdown:\n", reconstructedMarkdown); // Added log
 
     // Update the original list block with the reconstructed markdown
     if (reconstructedMarkdown !== '') {
@@ -83,11 +82,35 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
             const originalListItemId = childNode.getAttribute('data-node-id');
             let sChildNodes = childNode.childNodes;
             let itemText = "";
+            let existingBlockId = ""; // New variable to store existing block ID
             let subListNodes = [];
+
+            // Helper to strip icon prefixes from text
+            const stripIconPrefix = (text: string) => {
+                // Matches leading emojis (like 📑, 📄) or :word: patterns
+                // Also matches `[<anything>](siyuan://blocks/<id>) ` pattern to catch previously generated links with icons
+                const iconOrLinkRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|\[.*?\]\(siyuan:\/\/blocks\/.*?\))\s*/;
+                return text.replace(iconOrLinkRegex, '').trim();
+            };
 
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
-                    itemText = window.Lute.BlockDOM2Content(sChildNode.innerHTML);
+                    const paragraphContent = sChildNode.innerHTML;
+                    // Get raw content first, then strip icon/link prefixes
+                    let rawItemText = window.Lute.BlockDOM2Content(paragraphContent);
+                    itemText = stripIconPrefix(rawItemText);
+
+                    // Check for Siyuan block reference ((blockId 'text'))
+                    let match = paragraphContent.match(/\(\((.*?)\s+\'(.*?)\'\)\)/);
+                    if (match && match[1]) {
+                        existingBlockId = match[1];
+                    } else {
+                        // Check for Markdown link [text](siyuan://blocks/blockId)
+                        match = paragraphContent.match(/\[.*?\]\(siyuan:\/\/blocks\/(.*?)\)/);
+                        if (match && match[1]) {
+                            existingBlockId = match[1];
+                        }
+                    }
                 } else if (sChildNode.getAttribute('data-type') == "NodeList") {
                     subListNodes.push(sChildNode);
                 }
@@ -106,7 +129,8 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     taskStatus = "[ ]";
                 }
             }
-            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus);
+            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, "", 0, existingBlockId);
+            currentStack.push(item);
             currentStack.push(item);
 
             // Recursively process sub-lists, passing the children stack of the current item
@@ -201,17 +225,32 @@ async function stackPopAll(stack:IndexStack){
         
         let subPath = stack.basePath+"/"+text;
 
-        let createdBlockId = await createDoc(indexStack.notebookId, subPath);
-        item.blockId = createdBlockId;
-        item.documentPath = stack.pPath + "/" + createdBlockId;
+        let currentBlockId = item.blockId; // Use existing blockId if available
+        if (!currentBlockId) {
+            currentBlockId = await createDoc(indexStack.notebookId, subPath);
+        }
+        item.blockId = currentBlockId;
+        item.documentPath = stack.pPath + "/" + currentBlockId;
 
         // Fetch block info to get icon and subFileCount
         let blockInfo = await client.getBlockInfo({
-            id: createdBlockId
+            id: currentBlockId
         });
         if (blockInfo && blockInfo.data) {
             item.icon = blockInfo.data.icon;
             item.subFileCount = blockInfo.data.subFileCount;
+        }
+
+        // Determine the display icon and explicitly set it
+        const currentIcon = item.icon || ''; // Use existing icon or empty string
+        const currentSubFileCount = item.subFileCount || 0; // Use existing subFileCount or 0
+        const displayIcon = getSubdocIcon(currentIcon, currentSubFileCount != 0);
+
+        if (displayIcon) {
+            await client.setBlockAttrs({
+                id: item.blockId,
+                attrs: { icon: displayIcon }
+            });
         }
 
         if(!item.children.isEmpty()){
