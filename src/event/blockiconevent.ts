@@ -245,14 +245,28 @@ async function stackPopAll(stack:IndexStack){
         item.blockId = currentBlockId;
         item.documentPath = stack.pPath + "/" + currentBlockId;
 
-        // Fetch block info to get icon and subFileCount
         let blockInfo = await client.getBlockInfo({ id: currentBlockId });
         console.log(`[Gemini-20251024-1] stackPopAll: blockInfo for ${item.text} (${currentBlockId}):`, blockInfo);
+
+        // New logic: Get icon from client.listDocsByPath
+        let docsInParent = await client.listDocsByPath({
+            notebook: indexStack.notebookId,
+            path: stack.pPath
+        });
+
+        let foundDocIcon = null;
+        if (docsInParent && docsInParent.data && docsInParent.data.files) {
+            const matchingDoc = docsInParent.data.files.find(doc => doc.id === currentBlockId);
+            if (matchingDoc) {
+                foundDocIcon = matchingDoc.icon;
+            }
+        }
+
         if (blockInfo && blockInfo.data) {
             item.subFileCount = blockInfo.data.subFileCount || 0;
+            // Prioritize the icon found from listDocsByPath, fallback to default based on subFileCount
+            item.icon = foundDocIcon || (item.subFileCount > 0 ? "📑" : "📄");
         }
-        // Determine the display icon based on subFileCount
-        item.icon = item.subFileCount > 0 ? "📑" : "📄";
         console.log(`[Gemini-20251024-1] stackPopAll: Initial item.icon for ${item.text}: '${item.icon}'`);
 
         if(!item.children.isEmpty()){
