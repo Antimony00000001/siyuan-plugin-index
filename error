@@ -1,0 +1,5 @@
+IndexPlugin onload
+2plugin:siyuan-plugins-index:8431 Uncaught (in promise) TypeError: window.Lute.BlockDOM2Md is not a function
+    at parseChildNodes (plugin:siyuan-plugins-index:8431:46)
+    at parseBlockDOM (plugin:siyuan-plugins-index:8400:9)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)

@@ -2,14 +2,15 @@
 export class IndexStackNode {
     depth: number;
     text: string;
-    blockId: string; // Added property for Siyuan block ID
+    blockId: string; // Added property for Siyuann block ID
     documentPath: string; // Added property for the full document path
     children: IndexStack;
     listType: string; // Added property
     taskStatus: string; // Added property for task list status ([ ] or [x])
     icon: string;
     subFileCount: number;
-    constructor(depth: number, text: string, listType: string = "unordered", taskStatus: string = "", icon: string = "", subFileCount: number = 0, blockId: string = "") {
+    originalMarkdown: string; // Added to store the original markdown content
+    constructor(depth: number, text: string, listType: string = "unordered", taskStatus: string = "", icon: string = "", subFileCount: number = 0, blockId: string = "", originalMarkdown: string = "") {
         this.depth = depth;
         this.text = text;
         this.blockId = blockId; // Initialize with provided blockId or empty string
@@ -19,6 +20,7 @@ export class IndexStackNode {
         this.taskStatus = taskStatus; // Initialize
         this.icon = icon;
         this.subFileCount = subFileCount;
+        this.originalMarkdown = originalMarkdown; // Initialize
     }
 }
 

@@ -91,6 +91,20 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
             let itemText = "";
             let existingBlockId = ""; // New variable to store existing block ID
             let subListNodes = [];
+            let cleanMarkdown = "";
+
+            try {
+                const kramdownResponse = await client.getBlockKramdown({ id: originalListItemId });
+                if (kramdownResponse?.data?.kramdown) {
+                    const originalMarkdown = kramdownResponse.data.kramdown
+                        .replace(/^(\*|\d+\.|- \[[ x]\])\s*/, '') // remove list markers
+                        .replace(/{:.*}$/, '') // remove trailing attributes
+                        .trim();
+                    cleanMarkdown = stripIconPrefix(originalMarkdown);
+                }
+            } catch (e) {
+                console.error(`Failed to get kramdown for ${originalListItemId}`, e);
+            }
 
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
@@ -98,6 +112,10 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     // Get raw content first, then strip icon/link prefixes
                     let rawItemText = window.Lute.BlockDOM2Content(paragraphContent);
                     itemText = stripIconPrefix(rawItemText);
+
+                    if (!cleanMarkdown) {
+                        cleanMarkdown = itemText; // Fallback to plain text
+                    }
 
                     // Check for Siyuan block reference ((blockId 'text'))
                     let match = paragraphContent.match(/\(\((.*?)\s+\'(.*?)\'\)\)/);
@@ -147,7 +165,7 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     taskStatus = "[ ]";
                 }
             }
-            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId);
+            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId, cleanMarkdown);
             currentStack.push(item);
 
             // Recursively process sub-lists, passing the children stack of the current item
@@ -363,22 +381,18 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                     const gdcIconInput = correspondingIndexNode.icon;
                     const gdcHasChildInput = correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0;
                     console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='${gdcIconInput}', hasChild=${gdcHasChildInput}`);
-                    let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
-                    console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for ${itemText}: '${iconPrefix.trim()}'`);
-                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${correspondingIndexNode.blockId}) ${itemText}
-`;
-
-
-
-                    const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
-
-                    if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {
-
-                        // Pass a copy of orderedListCounters to the recursive call
-
-                        markdown += await reconstructListMarkdownWithLinks(nestedListElement, correspondingIndexNode.children, indentLevel + 1, { ...orderedListCounters });
-
-                    }
+                                        let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
+                                        console.log(`[Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for ${itemText}: '${iconPrefix.trim()}'`);
+                                        markdown += `${prefix}[${iconPrefix.trim()} ${correspondingIndexNode.originalMarkdown}](siyuan://blocks/${correspondingIndexNode.blockId})\n`;
+                    
+                                        const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
+                    
+                                        if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {
+                    
+                                            // Pass a copy of orderedListCounters to the recursive call
+                                            markdown += await reconstructListMarkdownWithLinks(nestedListElement, correspondingIndexNode.children, indentLevel + 1, { ...orderedListCounters });
+                    
+                                        }
 
                 }
 
