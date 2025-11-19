@@ -1,184 +1,259 @@
 IndexPlugin onload
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 标题, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 标题 (20251119112311-1ctr9s2): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 标题: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 43143, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 43143 (20251119112311-spac1of): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 43143: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 425245, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 425245 (20251119112312-05em78k): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 425245: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 3423432, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 3423432 (20251119112312-clc8ac3): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 一级标题1, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 一级标题1 (20251119112312-86i20hh): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 3423432, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 3423432 (20251119112313-oic1tdw): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 0
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230658-ieu8ue9 '一级标题1'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230658-ieu8ue9 '一级标题1'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='一级标题1', final cleanMarkdown='((20251024230658-ieu8ue9 '一级标题1'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230807-w2kqcot '3423432'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230807-w2kqcot '3423432'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='((20251024230807-w2kqcot '3423432'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230808-hi8k9mf '标题'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230808-hi8k9mf '标题'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='标题', final cleanMarkdown='((20251024230808-hi8k9mf '标题'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230813-y7nja7l '43143'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230813-y7nja7l '43143'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='43143', final cleanMarkdown='((20251024230813-y7nja7l '43143'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230818-jr2k6fp '425245'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230818-jr2k6fp '425245'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='425245', final cleanMarkdown='((20251024230818-jr2k6fp '425245'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: ((20251024230821-mt4px2a '3423432'))
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: First
+plugin:siyuan-plugins-index:8456 [Parse][First Run]: Cleaned='((20251024230821-mt4px2a '3423432'))', Found ID=''
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='((20251024230821-mt4px2a '3423432'))'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 1
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='一级标题1', blockId='20251119112312-86i20hh', originalMarkdown='((20251024230658-ieu8ue9 '一级标题1'))'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 3423432: '📄'
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 1:
-    - [📄 -((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112313-oic1tdw)
-
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 标题: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119112313-oic1tdw', originalMarkdown='((20251024230807-w2kqcot '3423432'))'
+plugin:siyuan-plugins-index:5540 [Gemini-20251024-1] getProcessedDocIcon: For icon '2764-fe0f', final result: '❤️'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='标题', blockId='20251119112311-1ctr9s2', originalMarkdown='((20251024230808-hi8k9mf '标题'))'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 标题: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 1
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 43143: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='43143', blockId='20251119112311-spac1of', originalMarkdown='((20251024230813-y7nja7l '43143'))'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 43143: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 2
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 425245: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='425245', blockId='20251119112312-05em78k', originalMarkdown='((20251024230818-jr2k6fp '425245'))'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 425245: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 3
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119112312-clc8ac3', originalMarkdown='((20251024230821-mt4px2a '3423432'))'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-86i20hh)​[一级标题1](siyuan://blocks/20251119112312-86i20hh)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-86i20hh)​[一级标题1', Cleaned='](siyuan://blocks/20251119112312-86i20hh)​[一级标题1', ID='20251119112312-86i20hh'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='一级标题1', final cleanMarkdown='](siyuan://blocks/20251119112312-86i20hh)​[一级标题1'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112313-oic1tdw)​[3423432](siyuan://blocks/20251119112313-oic1tdw)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112313-oic1tdw)​[3423432', Cleaned='](siyuan://blocks/20251119112313-oic1tdw)​[3423432', ID='20251119112313-oic1tdw'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='](siyuan://blocks/20251119112313-oic1tdw)​[3423432'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题](siyuan://blocks/20251119112311-1ctr9s2)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', Cleaned='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', ID='20251119112311-1ctr9s2'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='❤️ 标题', final cleanMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112311-spac1of)​[43143](siyuan://blocks/20251119112311-spac1of)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112311-spac1of)​[43143', Cleaned='](siyuan://blocks/20251119112311-spac1of)​[43143', ID='20251119112311-spac1of'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='43143', final cleanMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-05em78k)​[425245](siyuan://blocks/20251119112312-05em78k)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-05em78k)​[425245', Cleaned='](siyuan://blocks/20251119112312-05em78k)​[425245', ID='20251119112312-05em78k'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='425245', final cleanMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432](siyuan://blocks/20251119112312-clc8ac3)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432', Cleaned='](siyuan://blocks/20251119112312-clc8ac3)​[3423432', ID='20251119112312-clc8ac3'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 3423432: '📄'
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 3:
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 2:
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 1:
-    - [📄 -((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-spac1of)
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 0:
-- [📄 -((20251024230658-ieu8ue9 '一级标题1'))-((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112312-86i20hh)
-    - [📄 -((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112313-oic1tdw)
-- [📄 -((20251024230808-hi8k9mf '标题'))-((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-1ctr9s2)
-    - [📄 -((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-spac1of)
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-VM1297:1 Uncaught (in promise) SyntaxError: "undefined" is not valid JSON
-    at JSON.parse (<anonymous>)
-    at insertOutlineAuto (plugin:siyuan-plugins-index:5432:32)
-insertOutlineAuto @ plugin:siyuan-plugins-index:5432
-await in insertOutlineAuto
-updateIndex @ plugin:siyuan-plugins-index:8621
-emit @ main.812fdc66ceafc2983fdb.js:1166
-(anonymous) @ main.812fdc66ceafc2983fdb.js:3878
-LE @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:4559
-Promise.then
-v @ main.812fdc66ceafc2983fdb.js:4559
-ct @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:900
-(anonymous) @ main.812fdc66ceafc2983fdb.js:4559
-Promise.then
-v @ main.812fdc66ceafc2983fdb.js:4559
-ch @ main.812fdc66ceafc2983fdb.js:900
-gi @ main.812fdc66ceafc2983fdb.js:900
-msgCallback @ main.812fdc66ceafc2983fdb.js:4840
-a.onmessage @ main.812fdc66ceafc2983fdb.js:13
-VM1298:1 Uncaught (in promise) SyntaxError: "undefined" is not valid JSON
-    at JSON.parse (<anonymous>)
-    at insertOutlineAuto (plugin:siyuan-plugins-index:5432:32)
-insertOutlineAuto @ plugin:siyuan-plugins-index:5432
-await in insertOutlineAuto
-updateIndex @ plugin:siyuan-plugins-index:8621
-emit @ main.812fdc66ceafc2983fdb.js:1166
-(anonymous) @ main.812fdc66ceafc2983fdb.js:3878
-LE @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:4559
-Promise.then
-v @ main.812fdc66ceafc2983fdb.js:4559
-ct @ main.812fdc66ceafc2983fdb.js:3878
-(anonymous) @ main.812fdc66ceafc2983fdb.js:900
-(anonymous) @ main.812fdc66ceafc2983fdb.js:4559
-Promise.then
-v @ main.812fdc66ceafc2983fdb.js:4559
-ch @ main.812fdc66ceafc2983fdb.js:900
-gi @ main.812fdc66ceafc2983fdb.js:900
-msgCallback @ main.812fdc66ceafc2983fdb.js:4840
-a.onmessage @ main.812fdc66ceafc2983fdb.js:13
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 标题, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 标题 (20251119112311-1ctr9s2): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 标题: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 43143, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 43143 (20251119112311-spac1of): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 43143: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 425245, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 425245 (20251119112312-05em78k): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 425245: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 3423432, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 3423432 (20251119112312-clc8ac3): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 一级标题1, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 一级标题1 (20251119112312-86i20hh): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8526 [Gemini-20251024-1] stackPopAll: Processing item: 3423432, Block ID: 
-plugin:siyuan-plugins-index:8533 [Gemini-20251024-1] stackPopAll: blockInfo for 3423432 (20251119112313-oic1tdw): {code: 0, msg: '', data: {…}}
-plugin:siyuan-plugins-index:8549 [Gemini-20251024-1] stackPopAll: Initial item.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 0
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='一级标题1', blockId='20251119112312-86i20hh', originalMarkdown='](siyuan://blocks/20251119112312-86i20hh)​[一级标题1'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 一级标题1: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 1
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119112313-oic1tdw', originalMarkdown='](siyuan://blocks/20251119112313-oic1tdw)​[3423432'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 3423432: '📄'
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 1:
-    - [📄 -((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112313-oic1tdw)
-
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 标题: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='❤️ 标题', blockId='20251119114744-8wubkby', originalMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 标题: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 1
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 43143: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='43143', blockId='20251119114745-z1gj0am', originalMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 43143: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 2
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 425245: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='425245', blockId='20251119114745-lxhiw94', originalMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 425245: '📄'
-plugin:siyuan-plugins-index:8558 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Function called for indentLevel: 3
-plugin:siyuan-plugins-index:8585 [Gemini-20251024-1] reconstructListMarkdownWithLinks: correspondingIndexNode.icon for 3423432: '📄'
-plugin:siyuan-plugins-index:8588 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Calling getSubdocIcon with input: icon='📄', hasChild=false
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119114745-6duh0f2', originalMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 一级标题1](siyuan://blocks/20251119112312-86i20hh)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 一级标题1', Cleaned='一级标题1', ID='20251119112312-86i20hh'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='一级标题1', final cleanMarkdown='一级标题1'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 3423432](siyuan://blocks/20251119112313-oic1tdw)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 3423432', Cleaned='3423432', ID='20251119112313-oic1tdw'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='3423432'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题](siyuan://blocks/20251119114744-8wubkby)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', Cleaned='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', ID='20251119114744-8wubkby'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='❤️ ​标题', final cleanMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112311-spac1of)​[43143](siyuan://blocks/20251119114745-z1gj0am)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112311-spac1of)​[43143', Cleaned='](siyuan://blocks/20251119112311-spac1of)​[43143', ID='20251119114745-z1gj0am'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​43143', final cleanMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-05em78k)​[425245](siyuan://blocks/20251119114745-lxhiw94)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-05em78k)​[425245', Cleaned='](siyuan://blocks/20251119112312-05em78k)​[425245', ID='20251119114745-lxhiw94'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​425245', final cleanMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432](siyuan://blocks/20251119114745-6duh0f2)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432', Cleaned='](siyuan://blocks/20251119112312-clc8ac3)​[3423432', ID='20251119114745-6duh0f2'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​3423432', final cleanMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120435-fib8y2f: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120435-ma287ak: The system cannot find the file specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120436-w7g37ue: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120435-ma287ak\20251119120435-fib8y2f: The system cannot find the path specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120436-y1tgtqh: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120435-ma287ak\20251119120435-fib8y2f\20251119120436-w7g37ue: The system cannot find the path specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
 plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
-plugin:siyuan-plugins-index:8590 [Gemini-20251024-1] reconstructListMarkdownWithLinks: getSubdocIcon result for 3423432: '📄'
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 3:
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 2:
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 1:
-    - [📄 -((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-spac1of)
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
-
-plugin:siyuan-plugins-index:8602 [Gemini-20251024-1] reconstructListMarkdownWithLinks: Generated markdown for indentLevel 0:
-- [📄 -((20251024230658-ieu8ue9 '一级标题1'))-((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112312-86i20hh)
-    - [📄 -((20251024230807-w2kqcot '3423432'))](siyuan://blocks/20251119112313-oic1tdw)
-- [📄 -((20251024230808-hi8k9mf '标题'))-((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-1ctr9s2)
-    - [📄 -((20251024230813-y7nja7l '43143'))-((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112311-spac1of)
-        - [📄 -((20251024230818-jr2k6fp '425245'))-((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-05em78k)
-            - [📄 -((20251024230821-mt4px2a '3423432'))](siyuan://blocks/20251119112312-clc8ac3)
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='一级标题1', blockId='20251119112312-86i20hh', originalMarkdown='一级标题1'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119112313-oic1tdw', originalMarkdown='3423432'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='❤️ ​标题', blockId='20251119120435-ma287ak', originalMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​43143', blockId='20251119120435-fib8y2f', originalMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​425245', blockId='20251119120436-w7g37ue', originalMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​3423432', blockId='20251119120436-y1tgtqh', originalMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 一级标题1](siyuan://blocks/20251119112312-86i20hh)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 一级标题1', Cleaned='一级标题1', ID='20251119112312-86i20hh'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='一级标题1', final cleanMarkdown='一级标题1'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 3423432](siyuan://blocks/20251119112313-oic1tdw)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 3423432', Cleaned='3423432', ID='20251119112313-oic1tdw'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='3423432', final cleanMarkdown='3423432'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题](siyuan://blocks/20251119120435-ma287ak)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', Cleaned='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题', ID='20251119120435-ma287ak'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='❤️ ​标题', final cleanMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112311-spac1of)​[43143](siyuan://blocks/20251119120435-fib8y2f)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112311-spac1of)​[43143', Cleaned='](siyuan://blocks/20251119112311-spac1of)​[43143', ID='20251119120435-fib8y2f'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​43143', final cleanMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-05em78k)​[425245](siyuan://blocks/20251119120436-w7g37ue)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-05em78k)​[425245', Cleaned='](siyuan://blocks/20251119112312-05em78k)​[425245', ID='20251119120436-w7g37ue'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​425245', final cleanMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
+plugin:siyuan-plugins-index:8436 [Parse][Input Kramdown]: [📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432](siyuan://blocks/20251119120436-y1tgtqh)
+plugin:siyuan-plugins-index:8439 [Parse][Run Type]: Second+
+plugin:siyuan-plugins-index:8444 [Parse][Second Run]: Anchor='📄 ](siyuan://blocks/20251119112312-clc8ac3)​[3423432', Cleaned='](siyuan://blocks/20251119112312-clc8ac3)​[3423432', ID='20251119120436-y1tgtqh'
+plugin:siyuan-plugins-index:8465 [Parse][Output]: itemText='​3423432', final cleanMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120448-e17xzym: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120447-9gwynge: The system cannot find the file specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120448-25y3pl6: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120447-9gwynge\20251119120448-e17xzym: The system cannot find the path specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
+plugin:siyuan-plugins-index:8548 [StackPop] Error processing block info for 20251119120448-o0ip71z: ne: open D:\思源dev\data\20251024230656-ra7ok1p\20251024230658-9ieeclv\20251119120447-9gwynge\20251119120448-e17xzym\20251119120448-25y3pl6: The system cannot find the path specified.
+    at l2._parseAxiosResponse (plugin:siyuan-plugins-index:3252:11)
+    at l2._request (plugin:siyuan-plugins-index:3223:27)
+    at async l2.listDocsByPath (plugin:siyuan-plugins-index:2760:12)
+    at async stackPopAll (plugin:siyuan-plugins-index:8534:26)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async stackPopAll (plugin:siyuan-plugins-index:8554:7)
+    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
+    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+stackPopAll @ plugin:siyuan-plugins-index:8548
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+stackPopAll @ plugin:siyuan-plugins-index:8554
+await in stackPopAll
+parseBlockDOM @ plugin:siyuan-plugins-index:8401
+await in parseBlockDOM
+click @ plugin:siyuan-plugins-index:8378
+(anonymous) @ main.812fdc66ceafc2983fdb.js:278
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='一级标题1', blockId='20251119112312-86i20hh', originalMarkdown='一级标题1'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='3423432', blockId='20251119112313-oic1tdw', originalMarkdown='3423432'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='❤️ ​标题', blockId='20251119120447-9gwynge', originalMarkdown='❤️ ](siyuan://blocks/20251119112311-1ctr9s2)​[标题'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​43143', blockId='20251119120448-e17xzym', originalMarkdown='](siyuan://blocks/20251119112311-spac1of)​[43143'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​425245', blockId='20251119120448-25y3pl6', originalMarkdown='](siyuan://blocks/20251119112312-05em78k)​[425245'
+plugin:siyuan-plugins-index:5528 [Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '📄'
+plugin:siyuan-plugins-index:8585 [Reconstruct]: text='​3423432', blockId='20251119120448-o0ip71z', originalMarkdown='](siyuan://blocks/20251119112312-clc8ac3)​[3423432'
