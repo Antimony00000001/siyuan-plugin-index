@@ -1,6 +1,0 @@
-plugin:siyuan-plugins-index:5569 Uncaught (in promise) ReferenceError: getSubdocIcon is not defined
-    at createIndexandOutline (plugin:siyuan-plugins-index:5569:17)
-    at async insertButton (plugin:siyuan-plugins-index:5339:3)
-2plugin:siyuan-plugins-index:5569 Uncaught (in promise) ReferenceError: getSubdocIcon is not defined
-    at createIndexandOutline (plugin:siyuan-plugins-index:5569:17)
-    at async insertButton (plugin:siyuan-plugins-index:5339:3)
