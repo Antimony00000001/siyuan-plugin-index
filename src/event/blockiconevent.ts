@@ -88,7 +88,7 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
         if (childNode.getAttribute('data-type') == "NodeListItem") {
             let sChildNodes = childNode.childNodes;
             let itemText = "";
-            let existingBlockId = "";
+            let existingBlockId = ""; // This is for the generated page ID.
             let subListNodes = [];
             let cleanMarkdown = "";
 
@@ -96,36 +96,21 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
                     const paragraphId = sChildNode.getAttribute('data-node-id');
                     const paragraphContent = sChildNode.innerHTML;
-                    
-                    itemText = stripIconPrefix(window.Lute.BlockDOM2Content(paragraphContent)).trim();
 
                     try {
                         const kramdownResponse = await client.getBlockKramdown({ id: paragraphId });
                         if (kramdownResponse?.data?.kramdown) {
                             let kramdown = kramdownResponse.data.kramdown.split('\n')[0];
-                            console.log(`[Parse][Input Kramdown]: ${kramdown}`);
 
-                            const linkMatch = kramdown.match(/^\[(.*)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)/);
-                            const iconRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|!\[.*?\]\(.*?\))\s*/;
-                            console.log(`[Parse][Run Type]: ${linkMatch ? 'Second+' : 'First'}`);
+                            const finalizedMatch = kramdown.match(/^\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)\s*--\s*(.*)$/s);
 
-                            if (linkMatch && linkMatch[2]) { // Second+ run
-                                existingBlockId = linkMatch[2];
-                                let anchorText = linkMatch[1] || '';
-                                cleanMarkdown = anchorText.replace(iconRegex, '').trim();
-                                console.log(`[Parse][Second Run]: Anchor='${anchorText}', Cleaned='${cleanMarkdown}', ID='${existingBlockId}'`);
-                            } else { // First run
+                            if (finalizedMatch) { // Run 2+ with the "ICON -- CONTENT" format
+                                existingBlockId = finalizedMatch[2]; // The generated page ID
+                                cleanMarkdown = finalizedMatch[3].trim();   // The original content part
+                                itemText = window.Lute.BlockDOM2Content(paragraphContent).replace(/^.*?--\s*/, "").trim();
+                            } else { // First run or other format
                                 cleanMarkdown = kramdown.replace(/\s*{:.*?}\s*/g, '').trim();
-                                let refMatch = paragraphContent.match(/\(\((.*?)\s+['"](.*?)['"]\)\)/);
-                                if (refMatch && refMatch[1]) {
-                                    existingBlockId = refMatch[1];
-                                } else {
-                                    let mdLinkMatch = paragraphContent.match(/\[.*?\]\(siyuan:\/\/blocks\/(.*?)\)/);
-                                    if (mdLinkMatch && mdLinkMatch[1]) {
-                                        existingBlockId = mdLinkMatch[1];
-                                    }
-                                }
-                                console.log(`[Parse][First Run]: Cleaned='${cleanMarkdown}', Found ID='${existingBlockId}'`);
+                                itemText = stripIconPrefix(window.Lute.BlockDOM2Content(paragraphContent)).trim();
                             }
                         }
                     } catch (e) {
@@ -135,7 +120,7 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                     if (!cleanMarkdown) {
                         cleanMarkdown = itemText; // Fallback
                     }
-                     console.log(`[Parse][Output]: itemText='${itemText}', final cleanMarkdown='${cleanMarkdown}'`);
+
                 } else if (sChildNode.getAttribute('data-type') == "NodeList") {
                     subListNodes.push(sChildNode);
                 }
@@ -148,10 +133,21 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                 taskStatus = (taskMarkerElement && taskMarkerElement.getAttribute('data-task') === 'true') ? "[x]" : "[ ]";
             }
             let existingSubFileCount = 0;
+            
+            let contentBlockId;
+            const refMatch = cleanMarkdown.match(/\(\((.*?)\s/);
+            if (refMatch) {
+                contentBlockId = refMatch[1];
+            } else {
+                const linkMatch = cleanMarkdown.match(/siyuan:\/\/blocks\/(.*?)\)/);
+                if (linkMatch) {
+                    contentBlockId = linkMatch[1];
+                }
+            }
 
-            if (existingBlockId) {
+            if (contentBlockId) {
                 try {
-                    let blockInfo = await client.getBlockInfo({ id: existingBlockId });
+                    let blockInfo = await client.getBlockInfo({ id: contentBlockId });
                     if (blockInfo && blockInfo.data) {
                         existingSubFileCount = blockInfo.data.subFileCount || 0;
                     }
@@ -175,7 +171,7 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
 
 async function getRootDoc(id:string){
     let response = await client.sql({
-        stmt: `SELECT * FROM blocks WHERE id = '${id}'`
+        stmt: `SELECT hpath FROM blocks WHERE id = '${id}'`
     });
     let result = response.data[0];
     return result?.hpath;
@@ -203,10 +199,14 @@ async function createDoc(notebookId:string,hpath:string){
 async function stackPopAll(stack:IndexStack){
     for (let i = stack.stack.length - 1; i >= 0; i--) {
         const item = stack.stack[i];
-        let text = item.text;
-        let subPath = stack.basePath+"/"+text;
-        let currentBlockId = await createDoc(indexStack.notebookId, subPath);
-        item.blockId = currentBlockId;
+        const text = item.text;
+        const subPath = stack.basePath+"/"+text;
+        
+        if (!item.blockId) {
+            item.blockId = await createDoc(indexStack.notebookId, subPath);
+        }
+        let currentBlockId = item.blockId;
+
         item.documentPath = stack.pPath + "/" + currentBlockId;
 
         try {
@@ -256,7 +256,7 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                 itemText = stripIconPrefix(itemText);
                 const correspondingIndexNode = currentStack.stack[stackIndex];
 
-                if (correspondingIndexNode && correspondingIndexNode.text === itemText && correspondingIndexNode.blockId) {
+                if (correspondingIndexNode && correspondingIndexNode.text === itemText.replace(/!\[\]\([^)]*\)/g, '').trim() && correspondingIndexNode.blockId) {
                     let prefix = "    ".repeat(indentLevel);
                     if (correspondingIndexNode.listType === "ordered") {
                         prefix += `${orderedListCounters[indentLevel]++}. `;
@@ -271,8 +271,8 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                     let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
                     
                     const node = correspondingIndexNode;
-                    console.log(`[Reconstruct]: text='${node.text}', blockId='${node.blockId}', originalMarkdown='${node.originalMarkdown}'`);
-                    markdown += `${prefix}[${iconPrefix.trim()} ${node.originalMarkdown}](siyuan://blocks/${node.blockId})\n`;
+
+                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${node.blockId}) -- ${node.originalMarkdown}\n`;
                     
                     const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
                     if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {
