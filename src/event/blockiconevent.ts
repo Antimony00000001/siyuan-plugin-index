@@ -252,11 +252,15 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
         if (originalListItem instanceof HTMLElement && originalListItem.getAttribute('data-type') === "NodeListItem") {
             const paragraphElement = originalListItem.querySelector('[data-type="NodeParagraph"]');
             if (paragraphElement) {
-                let itemText = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
-                itemText = stripIconPrefix(itemText);
+                let itemTextFromDOM = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
+                
+                let comparableItemText = itemTextFromDOM.includes(' -- ')
+                    ? itemTextFromDOM.replace(/^.*?--\s*/, "").trim()
+                    : stripIconPrefix(itemTextFromDOM);
+
                 const correspondingIndexNode = currentStack.stack[stackIndex];
 
-                if (correspondingIndexNode && correspondingIndexNode.text === itemText.replace(/!\[\]\([^)]*\)/g, '').trim() && correspondingIndexNode.blockId) {
+                if (correspondingIndexNode && correspondingIndexNode.text === comparableItemText.replace(/!\[\]\([^)]*\)/g, '').trim() && correspondingIndexNode.blockId) {
                     let prefix = "    ".repeat(indentLevel);
                     if (correspondingIndexNode.listType === "ordered") {
                         prefix += `${orderedListCounters[indentLevel]++}. `;
