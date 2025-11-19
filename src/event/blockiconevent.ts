@@ -86,30 +86,30 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
     tab++;
     for (const childNode of childNodes) { // childNode is a NodeListItem
         if (childNode.getAttribute('data-type') == "NodeListItem") {
-            const originalListItemId = childNode.getAttribute('data-node-id');
             let sChildNodes = childNode.childNodes;
             let itemText = "";
             let existingBlockId = ""; // New variable to store existing block ID
             let subListNodes = [];
             let cleanMarkdown = "";
 
-            try {
-                const kramdownResponse = await client.getBlockKramdown({ id: originalListItemId });
-                if (kramdownResponse?.data?.kramdown) {
-                    const processedKramdown = kramdownResponse.data.kramdown
-                        .replace(/^(\*|\d+\.|- \[[ x]\])\s*/, '') // remove list markers
-                        .replace(/\s*{:.*?}\s*/g, '') // remove all attributes like {: id="..."}
-                        .replace(/\n/g, ' ') // replace newlines with space to avoid breaking link syntax
-                        .trim();
-                    cleanMarkdown = stripIconPrefix(processedKramdown);
-                }
-            } catch (e) {
-                console.error(`Failed to get kramdown for ${originalListItemId}`, e);
-            }
-
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
+                    const paragraphId = sChildNode.getAttribute('data-node-id');
                     const paragraphContent = sChildNode.innerHTML;
+                    
+                    try {
+                        const kramdownResponse = await client.getBlockKramdown({ id: paragraphId });
+                        if (kramdownResponse?.data?.kramdown) {
+                            const processedKramdown = kramdownResponse.data.kramdown
+                                .replace(/\s*{:.*?}\s*/g, '') // remove all attributes like {: id="..."}
+                                .replace(/\n/g, ' ') // replace newlines with space to avoid breaking link syntax
+                                .trim();
+                            cleanMarkdown = stripIconPrefix(processedKramdown);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to get kramdown for paragraph ${paragraphId}`, e);
+                    }
+                    
                     // Get raw content first, then strip icon/link prefixes
                     let rawItemText = window.Lute.BlockDOM2Content(paragraphContent);
                     itemText = stripIconPrefix(rawItemText);
