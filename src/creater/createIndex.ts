@@ -398,72 +398,74 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
 
     if (settings.get("depth") == 0 || settings.get("depth") > tab) {
 
-        // let docs = await client.listDocsByPath(notebook, ppath);
-        let docs = await client.listDocsByPath({
-            notebook: notebook,
-            path: ppath
-        });
+        let docs;
+        try {
+            docs = await client.listDocsByPath({
+                notebook: notebook,
+                path: ppath
+            });
+        } catch (err) {
+            console.error(`Failed to list docs for path "${ppath}":`, err);
+            return; // Stop processing this branch if listing docs fails
+        }
+
+        if (!docs?.data?.files?.length) {
+            return; // No sub-documents, which is valid, so just return.
+        }
+        
         tab++;
 
         //生成写入文本
         for (let doc of docs.data.files) {
+            try {
+                let data = "";
+                let id = doc.id;
+                let name = doc.name.slice(0, -3);
+                let icon = doc.icon;
+                let subFileCount = doc.subFileCount;
+                let path = doc.path;
+                for (let n = 1; n < tab; n++) {
+                    data += '    ';
+                }
 
-            let data = "";
-            let id = doc.id;
-            let name = doc.name.slice(0, -3);
-            let icon = doc.icon;
-            let subFileCount = doc.subFileCount;
-            let path = doc.path;
-            for (let n = 1; n < tab; n++) {
-                data += '    ';
-            }
+                //转义
+                name = escapeHtml(name);
 
-            //转义
-            name = escapeHtml(name);
+                //应用设置
+                let listType = settings.get("listType") == "unordered" ? true : false;
+                if (listType) {
+                    data += "* ";
+                } else {
+                    data += "1. ";
+                }
 
-            //应用设置
-            let listType = settings.get("listType") == "unordered" ? true : false;
-            if (listType) {
-                data += "* ";
-            } else {
-                data += "1. ";
-            }
+                if (settings.get("icon")) {
+                    data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
+                }
 
-            // if(settings.get("fold") == tab){
-            //     data += '{: fold="1"}';
-            // }
-
-            if (settings.get("icon")) {
-                data += `${getSubdocIcon(icon, subFileCount != 0)} `;
-            }
-
-            //置入数据
-            let linkType = settings.get("linkType") == "ref" ? true : false;
-            if (linkType) {
-                data += `[${name}](siyuan://blocks/${id})\n`;
-            } else {
-                data += `((${id} '${name}'))\n`;
-            }
-
-            //大纲改为引述块样式todo
-            // if(subFileCount == 0){
+                //置入数据
+                let linkType = settings.get("linkType") == "ref" ? true : false;
+                if (linkType) {
+                    data += `[${name}](siyuan://blocks/${id})\n`;
+                } else {
+                    data += `((${id} '${name}'))\n`;
+                }
+                
                 let outlineData = await requestGetDocOutline(id);
-                // console.log(id);
-                // console.log(outlineData);
                 data = insertOutline(data, outlineData, tab, tab);
-            // }
 
-            // console.log(data);
-            let item = new IndexQueueNode(tab, data);
-            pitem.push(item);
-            //`((id "锚文本"))`
-            if (subFileCount > 0) {//获取下一层级子文档
-                await createIndexandOutline(notebook, path, item.children, tab);
+                let item = new IndexQueueNode(tab, data);
+                pitem.push(item);
+                //`((id "锚文本"))`
+                if (subFileCount > 0) {//获取下一层级子文档
+                    await createIndexandOutline(notebook, path, item.children, tab);
+                }
+            } catch (err) {
+                console.error(`Failed to process document "${doc.id}" in createIndexandOutline:`, err);
+                // Continue to the next document
             }
-
         }
     }
-
 }
 
 /**
@@ -513,7 +515,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             // }
 
             if (settings.get("icon")) {
-                data += `${getSubdocIcon(icon, subFileCount != 0)} `;
+                data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
             }
 
             //置入数据

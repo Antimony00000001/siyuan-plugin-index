@@ -1,4 +1,6 @@
-Uncaught (in promise) ReferenceError: subPath is not defined
-    at stackPopAll (plugin:siyuan-plugins-index:8549:32)
-    at async parseBlockDOM (plugin:siyuan-plugins-index:8401:3)
-    at async Object.click (plugin:siyuan-plugins-index:8378:7)
+plugin:siyuan-plugins-index:5569 Uncaught (in promise) ReferenceError: getSubdocIcon is not defined
+    at createIndexandOutline (plugin:siyuan-plugins-index:5569:17)
+    at async insertButton (plugin:siyuan-plugins-index:5339:3)
+2plugin:siyuan-plugins-index:5569 Uncaught (in promise) ReferenceError: getSubdocIcon is not defined
+    at createIndexandOutline (plugin:siyuan-plugins-index:5569:17)
+    at async insertButton (plugin:siyuan-plugins-index:5339:3)
