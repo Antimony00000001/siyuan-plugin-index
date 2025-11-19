@@ -96,11 +96,12 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
             try {
                 const kramdownResponse = await client.getBlockKramdown({ id: originalListItemId });
                 if (kramdownResponse?.data?.kramdown) {
-                    const originalMarkdown = kramdownResponse.data.kramdown
+                    const processedKramdown = kramdownResponse.data.kramdown
                         .replace(/^(\*|\d+\.|- \[[ x]\])\s*/, '') // remove list markers
-                        .replace(/{:.*}$/, '') // remove trailing attributes
+                        .replace(/\s*{:.*?}\s*/g, '') // remove all attributes like {: id="..."}
+                        .replace(/\n/g, ' ') // replace newlines with space to avoid breaking link syntax
                         .trim();
-                    cleanMarkdown = stripIconPrefix(originalMarkdown);
+                    cleanMarkdown = stripIconPrefix(processedKramdown);
                 }
             } catch (e) {
                 console.error(`Failed to get kramdown for ${originalListItemId}`, e);
