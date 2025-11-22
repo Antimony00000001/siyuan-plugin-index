@@ -55,7 +55,7 @@ async function parseBlockDOM(detail: any) {
     } else if (subType === 't') {
         initialListType = "task";
     }
-    indexStack.basePath = await getRootDoc(docId);
+    indexStack.basePath = await getRootDoc(detail.protyle.block.rootID);
     // We still need docData for pPath, so let's get it separately
     let docDataForPath = await client.getBlockInfo({
         id: detail.protyle.block.rootID
@@ -254,8 +254,8 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
             if (paragraphElement) {
                 let itemTextFromDOM = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
                 
-                let comparableItemText = itemTextFromDOM.includes(' -- ')
-                    ? itemTextFromDOM.replace(/^.*?--\s*/, "").trim()
+                let comparableItemText = itemTextFromDOM.includes(' ➖ ')
+                    ? itemTextFromDOM.replace(/^.*?➖\s*/, "").trim()
                     : stripIconPrefix(itemTextFromDOM);
 
                 const correspondingIndexNode = currentStack.stack[stackIndex];
