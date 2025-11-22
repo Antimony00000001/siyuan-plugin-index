@@ -102,12 +102,12 @@ async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 
                         if (kramdownResponse?.data?.kramdown) {
                             let kramdown = kramdownResponse.data.kramdown.split('\n')[0];
 
-                            const finalizedMatch = kramdown.match(/^\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)\s*--\s*(.*)$/s);
+                            const finalizedMatch = kramdown.match(/^\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)\s*➖\s*(.*)$/s);
 
-                            if (finalizedMatch) { // Run 2+ with the "ICON -- CONTENT" format
+                            if (finalizedMatch) { // Run 2+ with the "ICON ➖ CONTENT" format
                                 existingBlockId = finalizedMatch[2]; // The generated page ID
                                 cleanMarkdown = finalizedMatch[3].trim();   // The original content part
-                                itemText = window.Lute.BlockDOM2Content(paragraphContent).replace(/^.*?--\s*/, "").trim();
+                                itemText = window.Lute.BlockDOM2Content(paragraphContent).replace(/^.*?➖\s*/, "").trim();
                             } else { // First run or other format
                                 cleanMarkdown = kramdown.replace(/\s*{:.*?}\s*/g, '').trim();
                                 itemText = stripIconPrefix(window.Lute.BlockDOM2Content(paragraphContent)).trim();
@@ -276,7 +276,7 @@ async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement
                     
                     const node = correspondingIndexNode;
 
-                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${node.blockId}) -- ${node.originalMarkdown}\n`;
+                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${node.blockId}) ➖ ${node.originalMarkdown}\n`;
                     
                     const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
                     if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {

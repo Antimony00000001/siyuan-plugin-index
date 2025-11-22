@@ -89,7 +89,7 @@ async function onCreate(dialog: Dialog) {
         }
 
         if (settings.get("iconNotebook")) {
-            data += `${getSubdocIcon(icon, subFileCount != 0)} `;
+            data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
         }
 
         //置入数据
