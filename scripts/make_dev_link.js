@@ -108,10 +108,15 @@ if (!fs.existsSync(devDir)) {
 const targetPath = `${targetDir}/${name}`;
 //如果已经存在，就退出
 if (fs.existsSync(targetPath)) {
-    log(`Failed! Target directory  ${targetPath} already exists`);
-} else {
-    //创建软链接
-    fs.symlinkSync(`${process.cwd()}/dev`, targetPath, 'dir');
-    log(`Done! Created symlink ${targetPath}`);
+    if (fs.lstatSync(targetPath).isSymbolicLink()) {
+        log(`Symbolic link ${targetPath} already exists, removing it.`);
+        fs.unlinkSync(targetPath);
+    } else {
+        log(`Target directory ${targetPath} already exists and is not a symlink, removing it.`);
+        fs.rmSync(targetPath, { recursive: true, force: true });
+    }
 }
+//创建软链接
+fs.symlinkSync(`${process.cwd()}/dev`, targetPath, 'dir');
+log(`Done! Created symlink ${targetPath}`);
 
