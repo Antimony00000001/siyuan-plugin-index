@@ -4,6 +4,7 @@ import { createDialog, initTopbar } from "./topbar";
 import { settings } from "./settings";
 import { buildDoc } from "./event/blockiconevent";
 import { updateIndex } from "./event/protyleevent";
+import { initEmojiEvent, removeEmojiEvent } from "./event/emojievent";
 
 export default class IndexPlugin extends Plugin {
 
@@ -19,7 +20,7 @@ export default class IndexPlugin extends Plugin {
         //监听文档载入事件
         this.eventBus.on("loaded-protyle-static", updateIndex);
         // this.eventBus.on("ws-main",this.eventBusLog);
-        
+        initEmojiEvent();
     }
     // onLayoutReady() {
     //     initObserver();
@@ -28,6 +29,7 @@ export default class IndexPlugin extends Plugin {
     onunload() {
         this.eventBus.off("click-blockicon", buildDoc);
         this.eventBus.off("loaded-protyle-static", updateIndex);
+        removeEmojiEvent();
         console.log("IndexPlugin onunload");
     }
 
