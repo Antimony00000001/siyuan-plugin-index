@@ -185,8 +185,22 @@ export async function insertAuto(notebookId: string, path: string, parentId: str
 
         //载入配置
         let str = ial.data["custom-index-create"];
-        // console.log(str);
-        settings.loadSettings(JSON.parse(str));
+        if (str) { // Only parse if str is not undefined or null
+            try {
+                settings.loadSettings(JSON.parse(str));
+            } catch (e) {
+                console.error("Error parsing custom-index-create settings:", e);
+                // Optionally, push an error message to the user
+                client.pushErrMsg({
+                    msg: i18n.errorMsg_settingsParseError,
+                    timeout: 3000
+                });
+                return; // Stop execution if settings are invalid
+            }
+        } else {
+            // If no custom settings, use defaults or handle as appropriate
+            console.log("No custom-index-create settings found, using defaults.");
+        }
         if (!settings.get("autoUpdate")) {
             return;
         }
@@ -343,8 +357,7 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
 
 
 //获取图标
-export function getSubdocIcon(icon: string, hasChild: boolean) {
-    // console.log("getSubdocIcon", icon, 'hasChild', hasChild);
+export function getProcessedDocIcon(icon: string, hasChild: boolean) {
     if (icon == '' || icon == undefined) {
         return hasChild ? "📑" : "📄";
     } else if (icon.indexOf(".") != -1) {
@@ -358,11 +371,24 @@ export function getSubdocIcon(icon: string, hasChild: boolean) {
     } else if (icon.includes("api/icon/getDynamicIcon")) {
         return `![](${icon})`;
     } else {
+        // If it's not a hex string, and not a URL, and not a file extension, assume it's a direct emoji.
+        // This is a heuristic, as a robust emoji check is complex.
+        if (!/^[0-9a-fA-F-]+$/.test(icon) && !icon.includes("http://") && !icon.includes("https://") && icon.length <= 4) { 
+             console.log(`[Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '${icon}'`);
+             return icon;
+        }
+
         let result = "";
-        icon.split("-").forEach(element => {
-            result += String.fromCodePoint(parseInt(element, 16))
-        });
-        // console.log("getSubdocIcon result", result);
+        for (const element of icon.split("-")) {
+            const codePoint = parseInt(element, 16);
+            if (isNaN(codePoint)) {
+                // If any part is not a valid hex, return default icons
+                console.log(`[Gemini-20251024-1] getProcessedDocIcon: parseInt failed for element '${element}', returning default.`);
+                return hasChild ? "📑" : "📄";
+            }
+            result += String.fromCodePoint(codePoint);
+        }
+        console.log(`[Gemini-20251024-1] getProcessedDocIcon: For icon '${icon}', final result: '${result}'`);
         return result;
     }
 }
@@ -372,72 +398,74 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
 
     if (settings.get("depth") == 0 || settings.get("depth") > tab) {
 
-        // let docs = await client.listDocsByPath(notebook, ppath);
-        let docs = await client.listDocsByPath({
-            notebook: notebook,
-            path: ppath
-        });
+        let docs;
+        try {
+            docs = await client.listDocsByPath({
+                notebook: notebook,
+                path: ppath
+            });
+        } catch (err) {
+            console.error(`Failed to list docs for path "${ppath}":`, err);
+            return; // Stop processing this branch if listing docs fails
+        }
+
+        if (!docs?.data?.files?.length) {
+            return; // No sub-documents, which is valid, so just return.
+        }
+        
         tab++;
 
         //生成写入文本
         for (let doc of docs.data.files) {
+            try {
+                let data = "";
+                let id = doc.id;
+                let name = doc.name.slice(0, -3);
+                let icon = doc.icon;
+                let subFileCount = doc.subFileCount;
+                let path = doc.path;
+                for (let n = 1; n < tab; n++) {
+                    data += '    ';
+                }
 
-            let data = "";
-            let id = doc.id;
-            let name = doc.name.slice(0, -3);
-            let icon = doc.icon;
-            let subFileCount = doc.subFileCount;
-            let path = doc.path;
-            for (let n = 1; n < tab; n++) {
-                data += '    ';
-            }
+                //转义
+                name = escapeHtml(name);
 
-            //转义
-            name = escapeHtml(name);
+                //应用设置
+                let listType = settings.get("listType") == "unordered" ? true : false;
+                if (listType) {
+                    data += "* ";
+                } else {
+                    data += "1. ";
+                }
 
-            //应用设置
-            let listType = settings.get("listType") == "unordered" ? true : false;
-            if (listType) {
-                data += "* ";
-            } else {
-                data += "1. ";
-            }
+                if (settings.get("icon")) {
+                    data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
+                }
 
-            // if(settings.get("fold") == tab){
-            //     data += '{: fold="1"}';
-            // }
-
-            if (settings.get("icon")) {
-                data += `${getSubdocIcon(icon, subFileCount != 0)} `;
-            }
-
-            //置入数据
-            let linkType = settings.get("linkType") == "ref" ? true : false;
-            if (linkType) {
-                data += `[${name}](siyuan://blocks/${id})\n`;
-            } else {
-                data += `((${id} '${name}'))\n`;
-            }
-
-            //大纲改为引述块样式todo
-            // if(subFileCount == 0){
+                //置入数据
+                let linkType = settings.get("linkType") == "ref" ? true : false;
+                if (linkType) {
+                    data += `[${name}](siyuan://blocks/${id})\n`;
+                } else {
+                    data += `((${id} '${name}'))\n`;
+                }
+                
                 let outlineData = await requestGetDocOutline(id);
-                // console.log(id);
-                // console.log(outlineData);
                 data = insertOutline(data, outlineData, tab, tab);
-            // }
 
-            // console.log(data);
-            let item = new IndexQueueNode(tab, data);
-            pitem.push(item);
-            //`((id "锚文本"))`
-            if (subFileCount > 0) {//获取下一层级子文档
-                await createIndexandOutline(notebook, path, item.children, tab);
+                let item = new IndexQueueNode(tab, data);
+                pitem.push(item);
+                //`((id "锚文本"))`
+                if (subFileCount > 0) {//获取下一层级子文档
+                    await createIndexandOutline(notebook, path, item.children, tab);
+                }
+            } catch (err) {
+                console.error(`Failed to process document "${doc.id}" in createIndexandOutline:`, err);
+                // Continue to the next document
             }
-
         }
     }
-
 }
 
 /**
@@ -487,7 +515,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             // }
 
             if (settings.get("icon")) {
-                data += `${getSubdocIcon(icon, subFileCount != 0)} `;
+                data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
             }
 
             //置入数据

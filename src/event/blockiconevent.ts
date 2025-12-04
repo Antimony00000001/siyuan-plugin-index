@@ -1,7 +1,16 @@
+import { insertDataSimple } from "../creater/createIndex";
 import { IndexStackNode, IndexStack } from "../indexnode";
-import { insertAfter } from "../creater/createIndex";
 import { settings } from "../settings";
 import { client, i18n } from "../utils";
+import { getProcessedDocIcon } from "../creater/createIndex";
+
+// Helper to strip icon prefixes from text
+const stripIconPrefix = (text: string) => {
+    // Matches leading emojis (like 📑, 📄) or :word: patterns
+    // Also matches `[<anything>](siyuan://blocks/<id>) ` pattern to catch previously generated links with icons
+    const iconOrLinkRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|\[.*?\]\(siyuan:\/\/blocks\/.*?\))\s*/;
+    return text.replace(iconOrLinkRegex, '').trim();
+};
 
 //目录栈
 let indexStack : IndexStack;
@@ -33,134 +42,250 @@ export function buildDoc({ detail }: any) {
  * @param detail 
  */
 async function parseBlockDOM(detail: any) {
-    // console.log(detail);
     indexStack = new IndexStack();
     indexStack.notebookId = detail.protyle.notebookId;
     let docId = detail.blockElements[0].getAttribute("data-node-id");
     let block = detail.blockElements[0].childNodes;
+    let blockElement = detail.blockElements[0];
+
+    let initialListType = "unordered"; // Default
+    const subType = blockElement.getAttribute('data-subtype');
+    if (subType === 'o') {
+        initialListType = "ordered";
+    } else if (subType === 't') {
+        initialListType = "task";
+    }
     indexStack.basePath = await getRootDoc(docId);
-    let docData = await client.getBlockInfo({
+    // We still need docData for pPath, so let's get it separately
+    let docDataForPath = await client.getBlockInfo({
         id: detail.protyle.block.rootID
     });
-    // let docData = await getParentDoc(detail.protyle.block.rootID);
-    indexStack.pPath = docData.data.path.slice(0, -3);
-    await parseChildNodes(block,indexStack);
+    indexStack.pPath = docDataForPath.data.path.slice(0, -3);
+    await parseChildNodes(block,indexStack,0,initialListType);
     await stackPopAll(indexStack);
-    await insertAfter(indexStack.notebookId,docId,docData.data.path);
-    // window.location.reload();
+
+    // Call the new function to reconstruct the markdown for the list
+    let reconstructedMarkdown = await reconstructListMarkdownWithLinks(detail.blockElements[0], indexStack);
+
+    // Update the original list block with the reconstructed markdown
+    if (reconstructedMarkdown !== '') {
+        await client.updateBlock({
+            id: docId, // Update the root NodeList block
+            data: reconstructedMarkdown,
+            dataType: 'markdown',
+        });
+    } else {
+        client.pushErrMsg({
+            msg: i18n.errorMsg_miss,
+            timeout: 3000
+        });
+    }
 }
 
-async function parseChildNodes(childNodes: any,pitem:IndexStack, tab = 0) {
+async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 0, parentListType: string) {
     tab++;
-    let newItem: IndexStack;
-    for (const childNode of childNodes) {
+    for (const childNode of childNodes) { // childNode is a NodeListItem
         if (childNode.getAttribute('data-type') == "NodeListItem") {
             let sChildNodes = childNode.childNodes;
+            let itemText = "";
+            let existingBlockId = ""; // This is for the generated page ID.
+            let subListNodes = [];
+            let cleanMarkdown = "";
+
             for (const sChildNode of sChildNodes) {
                 if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
-                    //获取文档标题
-                    let text = window.Lute.BlockDOM2Content(sChildNode.innerHTML);
-                    // console.log(text);
-                    //创建文档
-                    let item = new IndexStackNode(tab,text);
-                    pitem.push(item);
-                    newItem = item.children;
+                    const paragraphId = sChildNode.getAttribute('data-node-id');
+                    const paragraphContent = sChildNode.innerHTML;
+
+                    try {
+                        const kramdownResponse = await client.getBlockKramdown({ id: paragraphId });
+                        if (kramdownResponse?.data?.kramdown) {
+                            let kramdown = kramdownResponse.data.kramdown.split('\n')[0];
+
+                            const finalizedMatch = kramdown.match(/^\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)\s*--\s*(.*)$/s);
+
+                            if (finalizedMatch) { // Run 2+ with the "ICON -- CONTENT" format
+                                existingBlockId = finalizedMatch[2]; // The generated page ID
+                                cleanMarkdown = finalizedMatch[3].trim();   // The original content part
+                                itemText = window.Lute.BlockDOM2Content(paragraphContent).replace(/^.*?--\s*/, "").trim();
+                            } else { // First run or other format
+                                cleanMarkdown = kramdown.replace(/\s*{:.*?}\s*/g, '').trim();
+                                itemText = stripIconPrefix(window.Lute.BlockDOM2Content(paragraphContent)).trim();
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`[Parse][Error] Failed to get kramdown for ${paragraphId}`, e);
+                    }
+
+                    if (!cleanMarkdown) {
+                        cleanMarkdown = itemText; // Fallback
+                    }
+
                 } else if (sChildNode.getAttribute('data-type') == "NodeList") {
-                    await parseChildNodes(sChildNode.childNodes,newItem,tab); 
+                    subListNodes.push(sChildNode);
                 }
+            }
+
+            let currentItemType = parentListType;
+            let taskStatus = "";
+            if (currentItemType === "task") {
+                const taskMarkerElement = childNode.querySelector('[data-type="NodeTaskListItemMarker"]');
+                taskStatus = (taskMarkerElement && taskMarkerElement.getAttribute('data-task') === 'true') ? "[x]" : "[ ]";
+            }
+            let existingSubFileCount = 0;
+            
+            let contentBlockId;
+            const refMatch = cleanMarkdown.match(/\(\((.*?)\s/);
+            if (refMatch) {
+                contentBlockId = refMatch[1];
+            } else {
+                const linkMatch = cleanMarkdown.match(/siyuan:\/\/blocks\/(.*?)\)/);
+                if (linkMatch) {
+                    contentBlockId = linkMatch[1];
+                }
+            }
+
+            if (contentBlockId) {
+                try {
+                    let blockInfo = await client.getBlockInfo({ id: contentBlockId });
+                    if (blockInfo && blockInfo.data) {
+                        existingSubFileCount = blockInfo.data.subFileCount || 0;
+                    }
+                } catch(e) { /* ignore if block not found */ }
+            }
+            let existingIcon = existingSubFileCount > 0 ? "📑" : "📄";
+
+            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId, cleanMarkdown);
+            currentStack.push(item);
+
+            for (const subListNode of subListNodes) {
+                let subListType = "unordered";
+                const subType = subListNode.getAttribute('data-subtype');
+                if (subType === 'o') subListType = "ordered";
+                else if (subType === 't') subListType = "task";
+                await parseChildNodes(subListNode.childNodes, item.children, tab, subListType);
             }
         }
     }
 }
 
-/**
- * 获取文档块路径
- * @param id 文档块id
- * @returns 文档块路径
- */
 async function getRootDoc(id:string){
-
     let response = await client.sql({
-        stmt: `SELECT * FROM blocks WHERE id = '${id}'`
+        stmt: `SELECT hpath FROM blocks WHERE id = '${id}'`
     });
-    
     let result = response.data[0];
     return result?.hpath;
 }
 
-/**
- * 创建文档
- * @param notebookId 笔记本id
- * @param hpath 文档路径
- * @returns 响应内容
- */
 async function createDoc(notebookId:string,hpath:string){
-
-    let response = await client.createDocWithMd({
-        markdown: "",
-        notebook: notebookId,
-        path: hpath
+    const escapedHpath = hpath.replace(/'/g, "''");
+    let existingDocResponse = await client.sql({
+        stmt: `SELECT id FROM blocks WHERE hpath = '${escapedHpath}' AND type = 'd' AND box = '${notebookId}'`
     });
-    return response.data;
 
+    if (existingDocResponse.data && existingDocResponse.data.length > 0) {
+        return existingDocResponse.data[0].id;
+    } else {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        let response = await client.createDocWithMd({
+            markdown: "",
+            notebook: notebookId,
+            path: hpath
+        });
+        return response.data;
+    }
 }
 
-/**
- * 全部出栈
- * @param stack 目录栈
- */
 async function stackPopAll(stack:IndexStack){
-    let item : IndexStackNode;
-    let temp = new IndexStack();
-    while(!stack.isEmpty()){
-        item = stack.pop();
-
-        let text = item.text;
-
-        // if(hasEmoji(text.slice(0,2))){
-        //     text = text.slice(3);
-        // }
+    for (let i = stack.stack.length - 1; i >= 0; i--) {
+        const item = stack.stack[i];
+        const text = item.text;
+        const subPath = stack.basePath+"/"+text;
         
-        let subPath = stack.basePath+"/"+text;
+        if (!item.blockId) {
+            item.blockId = await createDoc(indexStack.notebookId, subPath);
+        }
+        let currentBlockId = item.blockId;
 
-        item.path = await createDoc(indexStack.notebookId, subPath);
-        item.path = stack.pPath + "/" + item.path
-        temp.push(item);
+        item.documentPath = stack.pPath + "/" + currentBlockId;
+
+        try {
+            let blockInfo = await client.getBlockInfo({ id: currentBlockId });
+            let docsInParent = await client.listDocsByPath({
+                notebook: indexStack.notebookId,
+                path: stack.pPath
+            });
+
+            let foundDocIcon = null;
+            if (docsInParent?.data?.files) {
+                const matchingDoc = docsInParent.data.files.find(doc => doc.id === currentBlockId);
+                if (matchingDoc) foundDocIcon = matchingDoc.icon;
+            }
+
+            if (blockInfo?.data) {
+                item.subFileCount = blockInfo.data.subFileCount || 0;
+                item.icon = foundDocIcon || (item.subFileCount > 0 ? "📑" : "📄");
+            }
+        } catch (e) {
+            console.error(`[StackPop] Error processing block info for ${currentBlockId}:`, e);
+            item.icon = item.subFileCount > 0 ? "📑" : "📄"; // Fallback icon
+        }
+
         if(!item.children.isEmpty()){
             item.children.basePath = subPath;
-            item.children.pPath = item.path;
-            // await stackPopAll(item.children);
-            stackPopAll(item.children); //可能更快
+            item.children.pPath = item.documentPath;
+            await stackPopAll(item.children);
         }
     }
-    temp.pPath = stack.pPath;
-    // await sortDoc(temp);
 }
 
-// /**
-//  * 文档排序
-//  * @param item 文档id栈
-//  */
-// async function sortDoc(item : IndexStack){
-//     //构建真实顺序
-//     let paths = [];
-//     while(!item.isEmpty()){
-//         paths.push(item.pop().path+".sy");
-//     }
-//     await requestChangeSort(paths,indexStack.notebookId);
-// }
+async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement, currentStack: IndexStack, indentLevel: number = 0, orderedListCounters: { [key: number]: number } = {}): Promise<string> {
+    let markdown = "";
+    const originalListItems = originalListElement.children;
+    let stackIndex = 0;
 
-// /**
-//  * 排序请求
-//  * @param paths 路径顺序
-//  * @param notebook 笔记本id
-//  */
-// async function requestChangeSort(paths:any[],notebook:string){
-//     await fetchSyncPost(
-//         "/api/filetree/changeSort",
-//         {
-//             paths: paths,
-//             notebook: notebook
-//         }
-//     );
-// }
+    if (currentStack.stack.length > 0 && currentStack.stack[0].listType === "ordered" && !orderedListCounters[indentLevel]) {
+        orderedListCounters[indentLevel] = 1;
+    }
+
+    for (const originalListItem of Array.from(originalListItems)) {
+        if (originalListItem instanceof HTMLElement && originalListItem.getAttribute('data-type') === "NodeListItem") {
+            const paragraphElement = originalListItem.querySelector('[data-type="NodeParagraph"]');
+            if (paragraphElement) {
+                let itemTextFromDOM = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
+                
+                let comparableItemText = itemTextFromDOM.includes(' -- ')
+                    ? itemTextFromDOM.replace(/^.*?--\s*/, "").trim()
+                    : stripIconPrefix(itemTextFromDOM);
+
+                const correspondingIndexNode = currentStack.stack[stackIndex];
+
+                if (correspondingIndexNode && correspondingIndexNode.text === comparableItemText.replace(/!\[\]\([^)]*\)/g, '').trim() && correspondingIndexNode.blockId) {
+                    let prefix = "    ".repeat(indentLevel);
+                    if (correspondingIndexNode.listType === "ordered") {
+                        prefix += `${orderedListCounters[indentLevel]++}. `;
+                    } else if (correspondingIndexNode.listType === "task") {
+                        prefix += `- ${correspondingIndexNode.taskStatus} `;
+                    } else { // unordered
+                        prefix += "- ";
+                    }
+                    
+                    const gdcIconInput = correspondingIndexNode.icon;
+                    const gdcHasChildInput = correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0;
+                    let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
+                    
+                    const node = correspondingIndexNode;
+
+                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${node.blockId}) -- ${node.originalMarkdown}\n`;
+                    
+                    const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
+                    if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {
+                        markdown += await reconstructListMarkdownWithLinks(nestedListElement, correspondingIndexNode.children, indentLevel + 1, { ...orderedListCounters });
+                    }
+                }
+            }
+            stackIndex++;
+        }
+    }
+    return markdown;
+}
