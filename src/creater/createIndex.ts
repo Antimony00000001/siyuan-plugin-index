@@ -288,6 +288,22 @@ async function requestGetDocOutline(blockId: string) {
     return result;
 }
 
+// Clean and escape content for outline
+function cleanAndEscape(content: string, forRef: boolean) {
+    // Remove block refs ((id "text")) or ((id 'text'))
+    let clean = content.replace(/\(\([0-9a-z-]+\s+['"](.*?)['"]\)\)/g, "$1");
+    // Remove links [text](url) -> text
+    clean = clean.replace(/\[(.*?)\]\(.*?\)/g, "$1");
+    
+    if (forRef) {
+        // ((id 'content')) - escape single quotes
+        return clean.replace(/'/g, "&apos;");
+    } else {
+        // [content](url) - escape brackets
+        return clean.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+    }
+}
+
 function insertOutline(data: string, outlineData: any[], tab: number, stab: number) {
 
     tab++;
@@ -303,6 +319,9 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
             name = outline.content;
         }
 
+        // Add debug log
+        console.log("insertOutline debug:", { name, id, depth: outline.depth });
+
         // let icon = doc.icon;
         let subOutlineCount = outline.count;
         for (let n = 1; n <= stab; n++) {
@@ -315,8 +334,7 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
             data += '    ';
         }
 
-        //转义
-        name = escapeHtml(name);
+        // Removed global escapeHtml(name)
 
         //应用设置
         let listType = settings.get("listTypeOutline") == "unordered" ? true : false;
@@ -331,13 +349,19 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
         let at = settings.get("at") ? "@" : "";
 
         if(outlineType){
+            // Copy mode: keep formatting, maybe just escape severe breakers if needed?
+            // For now, using raw name as it was likely intended to show formatted text.
             data += `${at}${name}((${id} '*'))\n`;
         } else {
             outlineType = settings.get("outlineType") == "ref" ? true : false;
             if (outlineType) {
-                data += `[${at}${name}](siyuan://blocks/${id})\n`;
+                // Link mode: [name](siyuan://blocks/id)
+                let cleanName = cleanAndEscape(name, false);
+                data += `[${at}${cleanName}](siyuan://blocks/${id})\n`;
             } else {
-                data += `((${id} '${at}${name}'))\n`;
+                // Block Ref mode: ((id 'name'))
+                let cleanName = cleanAndEscape(name, true);
+                data += `((${id} '${at}${cleanName}'))\n`;
             }
         }
         
