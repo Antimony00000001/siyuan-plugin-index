@@ -126,8 +126,8 @@
             <svg><use xlink:href="#iconCalendar"></use></svg>
         </div>
         <div class="fn__flex-1"></div>
-        <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Remove" on:click={() => selectEmoji("")} on:keydown={() => {}}>
-            <svg><use xlink:href="#iconTrashcan"></use></svg>
+        <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Reset" on:click={() => selectEmoji("📄")} on:keydown={() => {}}>
+            <svg><use xlink:href="#iconUndo"></use></svg>
         </span>
     </div>
 

@@ -43,7 +43,7 @@ async function handleAltClick(event: MouseEvent) {
 
 function showEmojiMenu(x: number, y: number, blockId: string | null, oldEmoji: string) {
     const dialog = new Dialog({
-        title: "Emoji",
+        title: "",
         content: `<div class="emoji-dialog-content" style="height: 100%; display: flex; flex-direction: column;"></div>`,
         width: "360px",
         height: "460px",
