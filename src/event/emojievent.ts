@@ -18,12 +18,15 @@ async function handleAltClick(event: MouseEvent) {
 
     const target = event.target as HTMLElement;
     const textContent = target.textContent?.trim() || "";
+    console.log("handleAltClick - textContent:", textContent); // Debug log
 
     // Matches:
-    // 1. Standard Unicode Emojis (including surrogate pairs, ZWJ sequences, etc.)
-    //    \p{Extended_Pictographic} covers most emojis.
-    //    The sequence pattern handles ZWJ (\u200d) combinations.
-    const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})(\u200d(\p{Extended_Pictographic}|\p{Emoji_Presentation}))*$/u;
+    // 1. Flags: \p{RI}\p{RI}
+    // 2. Standard/Complex Emojis:
+    //    Start with Extended_Pictographic or Emoji_Presentation (avoids matching digits/punctuation)
+    //    Optional modifiers/VS16
+    //    Optional ZWJ sequences followed by ANY Emoji + modifiers
+    const emojiRegex = /^(?:(?:\p{RI}\p{RI})|(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})(?:\p{Emoji_Modifier}|\uFE0F)?(?:\u200d\p{Emoji}(?:\p{Emoji_Modifier}|\uFE0F)?)*)$/u;
 
     if (textContent && emojiRegex.test(textContent)) {
         event.preventDefault();
