@@ -88,20 +88,22 @@ class Settings{
     }
 
     loadSettings(data: any){
-        this.set("icon",data.icon);
-        this.set("depth",data.depth);
-        this.set("listType",data.listType);
-        this.set("linkType",data.linkType);
-        this.set("fold",data.fold);
-        this.set("col",data.col);
-        this.set("autoUpdate",data.autoUpdate);
+        const def = new SettingsProperty();
+        this.set("icon", data.icon ?? def.icon);
+        this.set("depth", data.depth ?? def.depth);
+        this.set("listType", data.listType ?? def.listType);
+        this.set("linkType", data.linkType ?? def.linkType);
+        this.set("fold", data.fold ?? def.fold);
+        this.set("col", data.col ?? def.col);
+        this.set("autoUpdate", data.autoUpdate ?? def.autoUpdate);
     }
 
     loadSettingsforOutline(data: any){
-        this.set("at",data.at);
-        this.set("outlineType",data.outlineType);
-        this.set("outlineAutoUpdate",data.outlineAutoUpdate);
-        this.set("listTypeOutline",data.listTypeOutline);
+        const def = new SettingsProperty();
+        this.set("at", data.at ?? def.at);
+        this.set("outlineType", data.outlineType ?? def.outlineType);
+        this.set("outlineAutoUpdate", data.outlineAutoUpdate ?? def.outlineAutoUpdate);
+        this.set("listTypeOutline", data.listTypeOutline ?? def.listTypeOutline);
     }
 
 }

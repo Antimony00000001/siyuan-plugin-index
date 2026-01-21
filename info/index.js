@@ -1,310 +1,161 @@
-const siyuan = require("siyuan");
-
-const Plugin = siyuan.Plugin;
-const showMessage = siyuan.showMessage;
-
 /**
- * 🔗 Constants
+ * 🛠️ SiYuan Console Script: Sync Heading -> List Item (Preserving Format & Attributes)
+ * 
+ * 这是一个可以在思源笔记控制台直接运行的脚本，用于模拟插件的核心同步逻辑。
+ * 它演示了如何将一个标题块（Heading）的内容和样式，同步到一个列表项（List Item）中，
+ * 同时保留列表项原有的“引用”或“链接”结构，并正确处理样式（通过 Span 包裹）。
+ * 
+ * 使用方法：
+ * 1. 在思源笔记按 F12 打开控制台 (Console)
+ * 2. 粘贴本代码并回车
+ * 3. 输入命令调用: syncHeadingToList("标题块ID", "列表项块ID")
  */
-const ATTR_CHILD_DOC = "custom-sync-child-doc";
-const ATTR_LOCAL_BLOCK = "custom-sync-local-block";
-const ATTR_PARENT_BLOCK = "custom-sync-parent-block";
 
-// 🔸 核心边界符 (仅用于列表项 List Item)
-const BRACKET = "🔸"; 
+async function syncHeadingToList(headingId, listItemId) {
+    console.clear();
+    console.group("🚀 开始同步: 标题 -> 列表");
+    console.log(`Source (Heading): ${headingId}`);
+    console.log(`Target (List):    ${listItemId}`);
 
-class ListBlockPlugin extends Plugin {
+    const BRACKET = "🔸"; // 插件使用的边界符
 
-    onload() {
-        console.log("🧩 ListBlockPlugin: Rich-Sync Loaded");
-        this.eventBus.on("click-blockicon", this.onBlockIconClick.bind(this));
+    // ==========================================
+    // 1. 获取标题块 (Heading) 的信息
+    // ==========================================
+    // 获取属性（为了提取样式 color, background-color 等）
+    const headingAttrsRes = await request("/api/attr/getBlockAttrs", { id: headingId });
+    // 获取 Markdown（为了提取富文本内容）
+    const headingSqlRes = await request("/api/query/sql", { 
+        stmt: `SELECT markdown, content FROM blocks WHERE id = '${headingId}' LIMIT 1` 
+    });
+    
+    if (!headingSqlRes.data[0]) {
+        console.error("❌ 找不到标题块");
+        console.groupEnd();
+        return;
     }
 
-    async onBlockIconClick({ detail }) {
-        const { menu, blockElements } = detail;
-        if (!blockElements || blockElements.length === 0) return;
-
-        const blockElement = blockElements[0];
-        const blockId = blockElement.getAttribute("data-node-id");
-
-        menu.addItem({
-            icon: "iconUpload",
-            label: "📤 推送 -> 子文档 (纯文本标题)",
-            click: () => this.syncManager(blockId, "PUSH_TO_DOC")
-        });
-        menu.addItem({
-            icon: "iconDownload",
-            label: "📥 拉取 <- 子文档 (保留格式)",
-            click: () => this.syncManager(blockId, "PULL_FROM_DOC")
-        });
-        menu.addSeparator();
-        menu.addItem({
-            icon: "iconRef",
-            label: "👇 推送 -> 底部标题 (全量富文本)",
-            click: () => this.syncManager(blockId, "PUSH_TO_BOTTOM")
-        });
-        menu.addItem({
-            icon: "iconRefresh",
-            label: "👆 拉取 <- 底部标题 (全量富文本)",
-            click: () => this.syncManager(blockId, "PULL_FROM_BOTTOM")
-        });
+    const headingMarkdown = headingSqlRes.data[0].markdown;
+    const headingAttrs = headingAttrsRes.data;
+    
+    // 1.1 解析标题内容：移除开头的 # 号和结尾的 IAL 属性
+    // 例如: "## **Bold** text {: id='xxx' style='color:red'}" -> "**Bold** text"
+    let sourceContent = headingMarkdown.replace(/^#+\s+/, "").trim();
+    const ialMatch = sourceContent.match(/(\s*\{:[^}]+\}\s*)$/);
+    if (ialMatch) {
+        sourceContent = sourceContent.slice(0, ialMatch.index).trim();
     }
 
-    async syncManager(sourceBlockId, actionType) {
-        try {
-            // 1. 获取核心数据
-            const coreInfo = await this.getCoreContentInfo(sourceBlockId);
-            if (!coreInfo) {
-                showMessage("无法获取块数据", -1, "error");
-                return;
-            }
+    // 1.2 生成样式属性字符串 (用于 span)
+    // 过滤掉系统属性，只保留样式相关的自定义属性
+    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-id", "custom-outline-id"]);
+    const styleParts = [];
+    for (const [k, v] of Object.entries(headingAttrs)) {
+        if (!ignoreAttrs.has(k)) styleParts.push(`${k}="${v}"`);
+    }
+    const styleString = styleParts.join(" ");
 
-            // [Auto-Fix] 仅在推送时，如果当前块没有包裹 🔸，自动包裹
-            if (actionType.startsWith("PUSH") && !coreInfo.hasWrapper) {
-                const newSelfContent = this.wrapContent(coreInfo.listMarker, coreInfo.richText);
-                await this.updateBlockText(coreInfo.targetId, newSelfContent);
-                // 更新内存状态，确保后续逻辑使用的是包裹后的逻辑
-                coreInfo.hasWrapper = true;
-            }
+    console.log("📄 标题纯净内容:", sourceContent);
+    console.log("🎨 标题样式属性:", styleString || "(无)");
 
-            const attrs = await this.getBlockAttrs(sourceBlockId);
+    // ==========================================
+    // 2. 获取列表项 (List Item) 的信息
+    // ==========================================
+    const listSqlRes = await request("/api/query/sql", { 
+        stmt: `SELECT markdown FROM blocks WHERE id = '${listItemId}' LIMIT 1` 
+    });
 
-            switch (actionType) {
-                case "PUSH_TO_DOC":
-                    await this.handlePushToDoc(sourceBlockId, coreInfo, attrs);
-                    break;
-                case "PULL_FROM_DOC":
-                    await this.handlePullFromDoc(sourceBlockId, coreInfo, attrs);
-                    break;
-                case "PUSH_TO_BOTTOM":
-                    await this.handlePushToBottom(sourceBlockId, coreInfo, attrs);
-                    break;
-                case "PULL_FROM_BOTTOM":
-                    await this.handlePullFromBottom(sourceBlockId, coreInfo, attrs);
-                    break;
-            }
-        } catch (e) {
-            console.error(e);
-            showMessage(`同步中止: ${e.message}`, -1, "error");
-        }
+    if (!listSqlRes.data[0]) {
+        console.error("❌ 找不到列表项块");
+        console.groupEnd();
+        return;
     }
 
-    // ============================================================
-    // 🏗️ 核心逻辑
-    // ============================================================
+    const listMarkdown = listSqlRes.data[0].markdown;
+    
+    // 2.1 提取列表项中的“核心富文本”部分（去除 * 标记和 🔸 边界符）
+    // 假设列表项格式为: * 🔸((id '内容'))🔸
+    const innerMatch = listMarkdown.match(new RegExp(`${BRACKET}(.*?)${BRACKET}`));
+    const oldRichText = innerMatch ? innerMatch[1] : listMarkdown.replace(/^(\s*([-*+]|\d+\.|#+)\s+)/, "").trim();
 
-    wrapContent(marker, content) {
-        // 强制包裹：标记 + 🔸 + 内容 + 🔸
-        return `${marker}${BRACKET}${content.trim()}${BRACKET}`;
+    console.log("📝 列表项原内容:", oldRichText);
+
+    // ==========================================
+    // 3. 构建新内容 (保留列表项的引用/链接结构)
+    // ==========================================
+    
+    // 3.1 核心内容处理：如果有样式，用 <span> 包裹内容
+    // 关键点：样式只包裹文字，不包裹外层的 ((...))
+    let newInnerContent = sourceContent;
+    if (styleString) {
+        newInnerContent = `<span ${styleString}>${sourceContent}</span>`;
     }
 
-    /**
-     * 🛡️ 安全替换逻辑 (仅用于子文档同步)
-     * 用于在保留原 Markdown 格式的前提下，仅替换纯文本部分
-     */
-    safeReplace(fullMarkdown, innerMarkdown, oldPlainText, newPlainText) {
-        const oldText = oldPlainText.trim();
-        const newText = newPlainText.trim();
-        
-        if (innerMarkdown.includes(oldText)) {
-            const newInner = innerMarkdown.replace(oldText, newText);
-            const newFullMarkdown = fullMarkdown.replace(
-                `${BRACKET}${innerMarkdown}${BRACKET}`, 
-                `${BRACKET}${newInner}${BRACKET}`
-            );
-            return newFullMarkdown;
+    // 3.2 结构保留：检查列表项原来是否是 引用 或 链接
+    // 我们需要把 newInnerContent 塞进原来的结构里
+    let finalContent = newInnerContent;
+
+    // 清理新内容中的冲突语法 (防止嵌套错误)
+    const cleanNew = newInnerContent
+        .replace(/\(\([0-9a-z-]+\s+['"](.*?)['"]\)\)/g, "$1") // 移除内嵌块引用
+        .replace(/\\\[(.*?)\\\]\(.*?\)/g, "$1"); // 移除内嵌链接
+
+    // Case A: 原来是链接 [text](url)
+    const linkMatch = oldRichText.match(/^\\[([\s\S]*?)\\]\(([\s\S]*?)\)$/);
+    if (linkMatch) {
+        // 转义方括号
+        const safeText = cleanNew.replace(/\\\[/g, "\\[").replace(/\\]/g, "\\]");
+        finalContent = `[${safeText}](${linkMatch[2]})`;
+        console.log("🔗 检测到链接结构，已保留");
+    } 
+    // Case B: 原来是块引用 ((id "text"))
+    else {
+        const refMatch = oldRichText.match(/^\(\(([0-9a-z-]+)\s+(['"])([\s\S]*?)\2\)\)$/);
+        if (refMatch) {
+            const id = refMatch[1];
+            const quote = refMatch[2]; // ' or "
+            // 转义引号
+            let safeText = cleanNew;
+            if (quote === "'") safeText = safeText.replace(/'/g, "&apos;");
+            if (quote === '"') safeText = safeText.replace(/"/g, "&quot;");
+            finalContent = `((${id} ${quote}${safeText}${quote}))`;
+            console.log("🔗 检测到引用结构，已保留");
         } else {
-            return null; // 格式太复杂，无法安全替换
+            console.log("ℹ️ 未检测到包装结构，使用纯文本");
         }
     }
 
-    // --- 场景 1: 子文档同步 (纯文本 <-> 格式化块) ---
-    // 逻辑：子文档标题不支持 Markdown，所以必须转纯文本
+    // ==========================================
+    // 4. 更新列表项
+    // ==========================================
+    // 组装最终 Markdown: * 🔸NewContent🔸
+    
+    // 获取列表标记 (如 * 或 1.)
+    const listMarkerMatch = listMarkdown.match(/^(\s*([-*+]|\d+\.)\s+)/);
+    const listMarker = listMarkerMatch ? listMarkerMatch[1] : "* ";
 
-    async handlePushToDoc(blockId, coreInfo, attrs) {
-        const docTitle = coreInfo.plainText; 
-        if (!docTitle) throw new Error("纯文本内容为空");
+    const finalMarkdown = `${listMarker}${BRACKET}${finalContent}${BRACKET}`;
 
-        const childDocId = attrs[ATTR_CHILD_DOC];
+    console.log("✅ 最终生成的 Markdown:", finalMarkdown);
 
-        if (childDocId) {
-            await this.renameDocByID(childDocId, docTitle);
-            showMessage(`子文档重命名为: ${docTitle}`);
-        } else {
-            const hPath = await this.getHPathByID(blockId);
-            const docPathInfo = await this.getPathByID(blockId);
-            const newDocPath = `${hPath}/${docTitle}`;
-            const newDocId = await this.createDocWithMd(docPathInfo.notebook, newDocPath, "");
+    await request("/api/block/updateBlock", {
+        id: listItemId,
+        dataType: "markdown",
+        data: finalMarkdown
+    });
 
-            if (newDocId) {
-                await this.setBlockAttr(blockId, ATTR_CHILD_DOC, newDocId);
-                await this.setBlockAttr(newDocId, ATTR_PARENT_BLOCK, blockId);
-                showMessage("✅ 已创建子文档");
-            }
-        }
-    }
-
-    async handlePullFromDoc(blockId, coreInfo, attrs) {
-        const childDocId = attrs[ATTR_CHILD_DOC];
-        if (!childDocId) { showMessage("未绑定子文档"); return; }
-
-        const childAttrs = await this.getBlockAttrs(childDocId);
-        const childTitle = childAttrs.title; // 纯文本
-
-        if (childTitle && childTitle !== coreInfo.plainText) {
-            // 需要重新获取 Markdown 来做安全替换
-            const currentRows = await this.sql(`SELECT markdown FROM blocks WHERE id = '${coreInfo.targetId}' LIMIT 1`);
-            const fullMarkdown = currentRows[0].markdown;
-            const match = fullMarkdown.match(new RegExp(`${BRACKET}(.*?)${BRACKET}`));
-            
-            if (!match) {
-                showMessage("无法定位边界符，请先推送", -1, "error");
-                return;
-            }
-            const innerMarkdown = match[1];
-
-            // 尝试保留格式替换
-            const newMarkdown = this.safeReplace(fullMarkdown, innerMarkdown, coreInfo.plainText, childTitle);
-
-            if (newMarkdown) {
-                await this.updateBlockText(coreInfo.targetId, newMarkdown);
-                showMessage(`已同步标题（保留格式）: ${childTitle}`);
-            } else {
-                showMessage("❌ 格式过于复杂，请手动修改以防破坏格式", -1, "error");
-            }
-        } else {
-            showMessage("标题一致，无需更新");
-        }
-    }
-
-    // --- 场景 2: 底部标题同步 (富文本 <-> 富文本) ---
-    // [FIXED] 逻辑：全量同步 Markdown，底部标题不带 🔸
-
-    async handlePushToBottom(blockId, coreInfo, attrs) {
-        // [FIX] 1. 去掉 🔸 2. 直接使用 richText (Markdown)
-        // 结果：# aaa**bold**bb
-        const content = `# ${coreInfo.richText}`; 
-        
-        const boundBlockId = attrs[ATTR_LOCAL_BLOCK];
-
-        if (boundBlockId && await this.checkBlockExists(boundBlockId)) {
-            await this.updateBlockText(boundBlockId, content);
-            showMessage("已更新底部标题 (全量)");
-        } else {
-            const rootId = await this.getRootId(blockId);
-            const newIds = await this.appendBlock(rootId, content);
-            const newBlockId = newIds[0].doOperations[0].id;
-            await this.setBlockAttr(blockId, ATTR_LOCAL_BLOCK, newBlockId);
-            await this.setBlockAttr(newBlockId, ATTR_PARENT_BLOCK, blockId);
-            showMessage("✅ 已创建底部标题");
-        }
-    }
-
-    async handlePullFromBottom(blockId, coreInfo, attrs) {
-        const boundBlockId = attrs[ATTR_LOCAL_BLOCK];
-        if (!boundBlockId) { showMessage("未绑定底部标题"); return; }
-
-        const rows = await this.sql(`SELECT markdown FROM blocks WHERE id = '${boundBlockId}' LIMIT 1`);
-        if (!rows || rows.length === 0) return;
-        
-        const boundMarkdown = rows[0].markdown;
-        
-        // [FIX] 底部标题现在没有 🔸 了，我们只需要去掉 # 标记
-        // 剩下的全部内容就是 richText
-        let extractedRichText = boundMarkdown.replace(/^#+\s+/, "").trim();
-
-        if (extractedRichText) {
-            // [FIX] 回写时，将提取到的纯 Markdown 包裹在 🔸 中
-            // 结果：* 🔸aaa**bold**bb🔸
-            const newMarkdown = this.wrapContent(coreInfo.listMarker, extractedRichText);
-            
-            await this.updateBlockText(coreInfo.targetId, newMarkdown);
-            showMessage("已从底部拉取更新 (全量)");
-        }
-    }
-
-    // ============================================================
-    // 🛠️ SQL 核心引擎
-    // ============================================================
-
-    async getCoreContentInfo(blockId) {
-        const attrs = await this.getBlockAttrs(blockId);
-        const type = attrs.type;
-        let targetId = blockId;
-        let isChildBlock = false;
-
-        // 定位子段落
-        if (type === "NodeListItem") {
-            const children = await this.sql(`SELECT id FROM blocks WHERE parent_id = '${blockId}' ORDER BY sort ASC LIMIT 1`);
-            if (children && children.length > 0) {
-                targetId = children[0].id; 
-                isChildBlock = true;
-            }
-        }
-
-        // 查库
-        const row = await this.sql(`SELECT markdown, content FROM blocks WHERE id = '${targetId}' LIMIT 1`);
-        if (!row || row.length === 0) return null;
-
-        const dbMarkdown = row[0].markdown || ""; 
-        const dbContent = row[0].content || "";   
-
-        // 提取列表标记 (用于回写)
-        let listMarker = "";
-        if (!isChildBlock) {
-            const match = dbMarkdown.match(/^(\s*([-*+]|\d+\.)\s+)/);
-            if (match) listMarker = match[1];
-        }
-
-        let richText = ""; 
-        let plainText = ""; 
-        let hasWrapper = false;
-
-        // 解析内容
-        if (dbContent.includes(BRACKET)) {
-            hasWrapper = true;
-            plainText = dbContent.replaceAll(BRACKET, "").trim();
-            // 从 Markdown 提取 🔸 中间的部分 (包含加粗等符号)
-            const mdMatch = dbMarkdown.match(new RegExp(`${BRACKET}(.*?)${BRACKET}`));
-            richText = mdMatch ? mdMatch[1] : plainText;
-        } else {
-            hasWrapper = false;
-            plainText = dbContent.trim(); 
-            // 尚未包裹，去除头部标记和属性
-            richText = dbMarkdown.replace(/^(\s*([-*+]|\d+\.|#+)\s+)/, "").replace(/\{:.*?\}/g, "").trim();
-        }
-
-        return {
-            sourceId: blockId,
-            targetId: targetId,
-            listMarker: listMarker,
-            hasWrapper: hasWrapper,
-            plainText: plainText, 
-            richText: richText    
-        };
-    }
-
-    // ============================================================
-    // 🔌 Helpers
-    // ============================================================
-
-    async sql(stmt) { return (await this.post("/api/query/sql", { stmt })); }
-    async getBlockAttrs(id) { return await this.post("/api/attr/getBlockAttrs", { id }); }
-    async setBlockAttr(id, key, value) { return await this.post("/api/attr/setBlockAttrs", { id, attrs: { [key]: value } }); }
-    async updateBlockText(id, text) { return await this.post("/api/block/updateBlock", { id, dataType: "markdown", data: text }); }
-    async createDocWithMd(notebook, path, markdown) { return await this.post("/api/filetree/createDocWithMd", { notebook, path, markdown }); }
-    async renameDocByID(id, title) { return await this.post("/api/filetree/renameDocByID", { id, title }); }
-    async getHPathByID(id) { return await this.post("/api/filetree/getHPathByID", { id }); }
-    async getPathByID(id) { return await this.post("/api/filetree/getPathByID", { id }); }
-    async getRootId(id) { const r = await this.sql(`SELECT root_id FROM blocks WHERE id = '${id}' LIMIT 1`); return r.length > 0 ? r[0].root_id : null; }
-    async checkBlockExists(id) { const r = await this.sql(`SELECT id FROM blocks WHERE id = '${id}' LIMIT 1`); return r.length > 0; }
-    async appendBlock(parentId, data) { return await this.post("/api/block/appendBlock", { parentID: parentId, dataType: "markdown", data }); }
-    async post(url, data) {
-        const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
-        const res = await response.json();
-        if (res.code !== 0) throw new Error(res.msg);
-        return res.data;
-    }
+    console.log("✨ 同步成功!");
+    console.groupEnd();
 }
 
-module.exports = ListBlockPlugin;
+/**
+ * 通用请求函数
+ */
+async function request(url, data) {
+    const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+    return await res.json();
+}

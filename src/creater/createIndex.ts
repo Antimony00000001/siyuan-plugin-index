@@ -247,9 +247,19 @@ export async function insertOutlineAuto(parentId: string) {
         });
         //载入配置
         let str = ial.data["custom-outline-create"];
-        // console.log(str);
-        settings.loadSettings(JSON.parse(str));
+        console.log("[IndexPlugin] AutoUpdate - Raw IAL String:", str);
+        
+        try {
+            let parsedSettings = JSON.parse(str);
+            console.log("[IndexPlugin] AutoUpdate - Parsed Settings:", parsedSettings);
+            settings.loadSettingsforOutline(parsedSettings);
+            console.log("[IndexPlugin] AutoUpdate - Applied 'outlineType':", settings.get("outlineType"));
+        } catch (e) {
+            console.error("[IndexPlugin] AutoUpdate - Failed to parse settings:", e);
+        }
+
         if (!settings.get("outlineAutoUpdate")) {
+            console.log("[IndexPlugin] AutoUpdate - Aborted: outlineAutoUpdate is false");
             return;
         }
         //插入目录
