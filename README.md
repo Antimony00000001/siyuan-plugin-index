@@ -16,10 +16,6 @@ Right click on the plugin icon, show more actions
 
 `CTRL + ALT + N`Insert notebook Index
 
-# Feedback
-
-[Feedback](https://ld246.com/article/1698684433007)
-
 # Changelog
 
 [CHANGELOG](https://github.com/TinkMingKing/siyuan-plugins-index/blob/main/CHANGELOG.md)
