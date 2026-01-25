@@ -8,9 +8,10 @@ let indexQueue: IndexQueue;
 
 /**
  * 左键点击topbar按钮插入目录
+ * @param targetBlockId - Optional: The ID of the block to replace (e.g., from a slash command)
  * @returns void
  */
-export async function insert() {
+export async function insert(targetBlockId?: string) {
     //载入配置
     await settings.load();
 
@@ -36,7 +37,7 @@ export async function insert() {
     data = queuePopAll(indexQueue, data);
     console.log(data);
     if (data != '') {
-        await insertData(parentId, data, "index");
+        await insertData(parentId, data, "index", targetBlockId);
     } else {
         client.pushErrMsg({
             msg: i18n.errorMsg_miss,
@@ -91,9 +92,10 @@ export async function insertButton() {
 
 /**
  * 点击插入大纲
+ * @param targetBlockId - Optional: The ID of the block to replace (e.g., from a slash command)
  * @returns void
  */
-export async function insertDocButton() {
+export async function insertDocButton(targetBlockId?: string) {
     //载入配置
     await settings.load();
 
@@ -116,7 +118,7 @@ export async function insertDocButton() {
     let extraData = await getBlocksData(ids);
     data = insertOutline(data, outlineData, 0, 0, extraData);
     if (data != '') {
-        await insertData(parentId, data, "outline");
+        await insertData(parentId, data, "outline", targetBlockId);
     } else {
         client.pushErrMsg({
             msg: i18n.errorMsg_miss_outline,
@@ -662,7 +664,8 @@ export async function insertDataSimple(id: string, data: string) {
 }
 
 //插入数据
-async function insertData(id: string, data: string, type: string) {
+async function insertData(id: string, data: string, type: string, targetBlockId?: string) {
+    console.log("[IndexPlugin] insertData called with:", { id, type, targetBlockId });
 
     let attrs : any;
 
@@ -680,21 +683,46 @@ async function insertData(id: string, data: string, type: string) {
         let rs = await client.sql({
             stmt: `SELECT * FROM blocks WHERE root_id = '${id}' AND ial like '%custom-${type}-create%' order by updated desc limit 1`
         });
+        console.log("[IndexPlugin] Existing block check:", rs.data[0]);
+
         if (rs.data[0]?.id == undefined) {
-            let result = await client.insertBlock({
-                data: data,
-                dataType: 'markdown',
-                parentID: id
-            });
-            await client.setBlockAttrs({
-                attrs: attrs,
-                id: result.data[0].doOperations[0].id
-            });
-            client.pushMsg({
-                msg: i18n.msg_success,
-                timeout: 3000
-            });
+            // No existing index/outline found
+            if (targetBlockId) {
+                console.log("[IndexPlugin] Updating target block (Slash command):", targetBlockId);
+                // Slash command: Replace the slash command block with new content
+                let result = await client.updateBlock({
+                    data: data,
+                    dataType: 'markdown',
+                    id: targetBlockId
+                });
+                await client.setBlockAttrs({
+                    attrs: attrs,
+                    id: result.data[0].doOperations[0].id
+                });
+                client.pushMsg({
+                    msg: i18n.msg_success,
+                    timeout: 3000
+                });
+            } else {
+                console.log("[IndexPlugin] Inserting new block (Button)");
+                // Topbar button: Append new block
+                let result = await client.insertBlock({
+                    data: data,
+                    dataType: 'markdown',
+                    parentID: id
+                });
+                await client.setBlockAttrs({
+                    attrs: attrs,
+                    id: result.data[0].doOperations[0].id
+                });
+                client.pushMsg({
+                    msg: i18n.msg_success,
+                    timeout: 3000
+                });
+            }
         } else {
+            console.log("[IndexPlugin] Updating existing block:", rs.data[0].id);
+            // Existing index/outline found
             let result = await client.updateBlock({
                 data: data,
                 dataType: 'markdown',
@@ -704,12 +732,22 @@ async function insertData(id: string, data: string, type: string) {
                 attrs: attrs,
                 id: result.data[0].doOperations[0].id
             });
+            
+            // If invoked via slash command, delete the slash command block since we updated the existing one
+            if (targetBlockId) {
+                console.log("[IndexPlugin] Deleting target block (duplicate/cleanup):", targetBlockId);
+                await client.deleteBlock({
+                    id: targetBlockId
+                });
+            }
+
             client.pushMsg({
                 msg: i18n.update_success,
                 timeout: 3000
             });
         }
     } catch (error) {
+        console.error("[IndexPlugin] insertData error:", error);
         client.pushErrMsg({
             msg: i18n.dclike,
             timeout: 3000

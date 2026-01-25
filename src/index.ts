@@ -5,6 +5,7 @@ import { settings } from "./settings";
 import { buildDoc } from "./event/blockiconevent";
 import { updateIndex } from "./event/protyleevent";
 import { initEmojiEvent, removeEmojiEvent } from "./event/emojievent";
+import { addSlash } from "./slash";
 
 export default class IndexPlugin extends Plugin {
 
@@ -37,6 +38,7 @@ export default class IndexPlugin extends Plugin {
     init(){
         setI18n(this.i18n);
         setPlugin(this);
+        addSlash();
         // console.log(this.getOpenedTab());
     }
 

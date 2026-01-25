@@ -1,13 +1,41 @@
 import { Protyle } from "siyuan";
-import { plugin } from "./utils";
+import { i18n, plugin, isMobile } from "./utils";
+import { insert, insertDocButton } from "./creater/createIndex";
+
+function getCurrentBlockId(): string | null {
+    const selection = window.getSelection();
+    if (!selection || !selection.anchorNode) return null;
+    let node = selection.anchorNode;
+    // Walk up the DOM tree from the text node to the element
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+        node = node.parentElement;
+    }
+    // Find the closest ancestor with data-node-id
+    const element = node as HTMLElement;
+    const block = element.closest('[data-node-id]');
+    return block ? block.getAttribute('data-node-id') : null;
+}
 
 export function addSlash() {
     plugin.protyleSlash = [{
-        filter: ["insert emoji 😊", "插入表情 😊", "crbqwx"],
-        html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${this.i18n.insertEmoji}</span><span class="b3-list-item__meta">😊</span></div>`,
-        id: "insertEmoji",
+        filter: ["insert index", "插入文档目录", "crawml"],
+        html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${i18n.insertIndex}</span><span class="b3-list-item__meta">${isMobile ? "" : "Ctrl+Alt+I"}</span></div>`,
+        id: "insertIndex",
         callback(protyle: Protyle) {
-            protyle.insert("😊");
+            const blockId = getCurrentBlockId();
+            console.log("[IndexPlugin] Slash insertIndex - blockId found:", blockId);
+            protyle.insert("");
+            insert(blockId);
+        }
+    }, {
+        filter: ["insert outline", "插入文档大纲", "crawdg"],
+        html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${i18n.insertoutline}</span><span class="b3-list-item__meta">${isMobile ? "" : "Ctrl+Alt+P"}</span></div>`,
+        id: "insertOutline",
+        callback(protyle: Protyle) {
+            const blockId = getCurrentBlockId();
+            console.log("[IndexPlugin] Slash insertOutline - blockId found:", blockId);
+            protyle.insert("");
+            insertDocButton(blockId);
         }
     }];
 }
