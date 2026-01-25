@@ -112,7 +112,9 @@ export async function insertDocButton() {
 
     let outlineData = await requestGetDocOutline(parentId);
     // console.log(outlineData);
-    data = insertOutline(data, outlineData, 0, 0);
+    let ids = collectOutlineIds(outlineData);
+    let extraData = await getBlocksData(ids);
+    data = insertOutline(data, outlineData, 0, 0, extraData);
     if (data != '') {
         await insertData(parentId, data, "outline");
     } else {
@@ -265,7 +267,9 @@ export async function insertOutlineAuto(parentId: string) {
         //插入目录
         let data = '';
         let outlineData = await requestGetDocOutline(parentId);
-        data = insertOutline(data, outlineData, 0, 0);
+        let ids = collectOutlineIds(outlineData);
+        let extraData = await getBlocksData(ids);
+        data = insertOutline(data, outlineData, 0, 0, extraData);
         // console.log(plugin.data);
         // console.log("data=" + data);
         if (data != '') {
@@ -298,6 +302,61 @@ async function requestGetDocOutline(blockId: string) {
     return result;
 }
 
+function collectOutlineIds(outlineData: any[], ids: string[] = []) {
+    for (const item of outlineData) {
+        ids.push(item.id);
+        if (item.blocks) collectOutlineIds(item.blocks, ids);
+        if (item.children) collectOutlineIds(item.children, ids);
+    }
+    return ids;
+}
+
+async function getBlocksData(ids: string[]) {
+    if (ids.length === 0) return {};
+    // Split IDs into chunks to avoid too long SQL statements (SiYuan/SQLite limit)
+    const chunkSize = 100;
+    const result: Record<string, { ial: string, markdown: string }> = {};
+    
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const idList = chunk.map(id => `'${id}'`).join(',');
+        const response = await client.sql({
+            stmt: `SELECT id, ial, markdown FROM blocks WHERE id IN (${idList})`
+        });
+        if (response.data) {
+            for (const row of response.data) {
+                result[row.id] = { ial: row.ial, markdown: row.markdown };
+            }
+        }
+    }
+    return result;
+}
+
+function filterIAL(ialStr: string) {
+    if (!ialStr) return "";
+    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-id", "custom-outline-id", "title-img", "icon", "class", "refcount"]);
+    
+    // Match key="value" pairs, handling escaped quotes
+    const parts = ialStr.match(/(\S+?)="([\s\S]*?)"/g);
+    if (!parts) return "";
+    
+    const filtered = parts.filter(part => {
+        const key = part.match(/^(\S+?)=/)?.[1];
+        return key && !ignoreAttrs.has(key);
+    });
+    
+    return filtered.join(" ");
+}
+
+function extractHeadingContent(markdown: string) {
+    if (!markdown) return "";
+    // Remove heading marks
+    let content = markdown.replace(/^#+\s+/, "").trim();
+    // Remove IAL at the end
+    content = content.replace(/\s*\{:[^}]+\}\s*$/, "").trim();
+    return content;
+}
+
 // Clean and escape content for outline
 function cleanAndEscape(content: string, forRef: boolean) {
     // Remove block refs ((id "text")) or ((id 'text'))
@@ -314,7 +373,7 @@ function cleanAndEscape(content: string, forRef: boolean) {
     }
 }
 
-function insertOutline(data: string, outlineData: any[], tab: number, stab: number) {
+function insertOutline(data: string, outlineData: any[], tab: number, stab: number, extraData?: Record<string, { ial: string, markdown: string }>) {
 
     tab++;
 
@@ -323,64 +382,77 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
     for (let outline of outlineData) {
         let id = outline.id;
         let name = "";
-        if (outline.depth == 0) {
-            name = outline.name;
+        let ial = "";
+
+        if (extraData && extraData[id]) {
+            name = extractHeadingContent(extraData[id].markdown) || (outline.depth == 0 ? outline.name : outline.content);
+            ial = filterIAL(extraData[id].ial);
         } else {
-            name = outline.content;
+            if (outline.depth == 0) {
+                name = outline.name;
+            } else {
+                name = outline.content;
+            }
         }
 
         // Add debug log
         console.log("insertOutline debug:", { name, id, depth: outline.depth });
 
+        let indent = "";
         // let icon = doc.icon;
         let subOutlineCount = outline.count;
         for (let n = 1; n <= stab; n++) {
-            data += '    ';
+            indent += '    ';
         }
 
-        data += "> ";
+        indent += "> ";
 
         for (let n = 1; n < tab - stab; n++) {
-            data += '    ';
+            indent += '    ';
         }
 
         // Removed global escapeHtml(name)
 
         //应用设置
         let listType = settings.get("listTypeOutline") == "unordered" ? true : false;
+        let listMarker = "";
         if (listType) {
-            data += "* ";
+            listMarker = "* ";
         } else {
-            data += "1. ";
+            listMarker = "1. ";
         }
+
+        data += indent + listMarker;
 
         //置入数据
         let outlineType = settings.get("outlineType") == "copy" ? true : false;
         let at = settings.get("at") ? "@" : "";
+        let ialStr = ial ? `\n${indent}   {: ${ial}}` : "";
 
         if(outlineType){
             // Copy mode: keep formatting, maybe just escape severe breakers if needed?
             // For now, using raw name as it was likely intended to show formatted text.
-            data += `${at}${name}((${id} '*'))\n`;
+            data += `${at}${name}((${id} '*'))${ialStr}\n`;
         } else {
             outlineType = settings.get("outlineType") == "ref" ? true : false;
+            let anchorText = at || "➖";
             if (outlineType) {
                 // Link mode: [name](siyuan://blocks/id)
-                let cleanName = cleanAndEscape(name, false);
-                data += `[${at}${cleanName}](siyuan://blocks/${id})\n`;
+                // Replicate ListBlockPlugin: [Anchor](Link) Text
+                data += `[${anchorText}](siyuan://blocks/${id}) ${name}${ialStr}\n`;
             } else {
                 // Block Ref mode: ((id 'name'))
-                let cleanName = cleanAndEscape(name, true);
-                data += `((${id} '${at}${cleanName}'))\n`;
+                // Replicate ListBlockPlugin: ((Ref)) Text
+                data += `((${id} '${anchorText}')) ${name}${ialStr}\n`;
             }
         }
         
         //`((id "锚文本"))`
         if (subOutlineCount > 0) {//获取下一层级子文档
             if (outline.depth == 0) {
-                data = insertOutline(data, outline.blocks, tab, stab);
+                data = insertOutline(data, outline.blocks, tab, stab, extraData);
             } else {
-                data = insertOutline(data, outline.children, tab, stab);
+                data = insertOutline(data, outline.children, tab, stab, extraData);
             }
         }
 
@@ -486,7 +558,9 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                 }
                 
                 let outlineData = await requestGetDocOutline(id);
-                data = insertOutline(data, outlineData, tab, tab);
+                let outlineIds = collectOutlineIds(outlineData);
+                let extraData = await getBlocksData(outlineIds);
+                data = insertOutline(data, outlineData, tab, tab, extraData);
 
                 let item = new IndexQueueNode(tab, data);
                 pitem.push(item);
