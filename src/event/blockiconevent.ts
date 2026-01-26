@@ -218,7 +218,7 @@ class ItemProcessor {
 
     async handlePushToDoc(core: any, containerAttrs: any, ctx: any) {
         const title = core.syncText;
-        console.log(`[Sync Debug] handlePushToDoc - Core ContentId: ${core.contentId}, Extracted Title: "${title}"`);
+        console.log(`[Sync Debug] handlePushToDoc - Core ContentId: ${core.contentId}, Extracted Title: "${title}", Extracted Icon: "${core.currentIcon}"`);
         
         if (!title) {
             console.log("[Sync Debug] Title is empty, aborting.");
@@ -250,12 +250,35 @@ class ItemProcessor {
                     
                     // Verify title
                     const verifyRes = await client.getBlockAttrs({ id: docId });
-                    console.log(`[Sync Debug] Post-rename Doc Title in DB: "${verifyRes?.data?.title}"`);
+                    const docIconRaw = verifyRes?.data?.icon || "";
+                    console.log(`[Sync Debug] Post-rename Doc Status - Title: "${verifyRes?.data?.title}", Icon: "${docIconRaw}"`);
+
+                    // Sync Icon if different
+                    if (core.currentIcon) {
+                        const resolvedDocIcon = this.resolveIcon(docIconRaw);
+                        // Compare the resolved character (e.g. "😒") with core.currentIcon ("😒")
+                        if (resolvedDocIcon !== core.currentIcon) {
+                            console.log(`[Sync Debug] Icon mismatch. Doc (resolved): "${resolvedDocIcon}", List: "${core.currentIcon}". Updating...`);
+                            
+                            // Convert to hex for SiYuan API
+                            const iconToSend = this.emojiToHex(core.currentIcon);
+                            console.log(`[Sync Debug] Sending icon as hex: "${iconToSend}"`);
+
+                            const setRes = await client.setBlockAttrs({ id: docId, attrs: { icon: iconToSend } });
+                            console.log(`[Sync Debug] setBlockAttrs result:`, setRes);
+                            
+                            const finalVerify = await client.getBlockAttrs({ id: docId });
+                            console.log(`[Sync Debug] Final Doc Icon in DB: "${finalVerify?.data?.icon}"`);
+                        } else {
+                            console.log("[Sync Debug] Icon already matches.");
+                        }
+                    }
+
                 } else {
                     console.error("[Sync Debug] Failed to get path for doc rename.");
                 }
             } catch (e) {
-                console.error("[Sync Debug] Rename failed:", e);
+                console.error("[Sync Debug] Rename/Icon Sync failed:", e);
             }
             
             const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
@@ -289,6 +312,14 @@ class ItemProcessor {
 
         if (newId) {
             await client.setBlockAttrs({ id: core.containerId, attrs: { [ATTR_INDEX]: newId } });
+            
+            // Initial Icon Sync for new doc
+             if (core.currentIcon) {
+                const iconToSend = this.emojiToHex(core.currentIcon);
+                console.log(`[Sync Debug] Setting new doc icon: "${iconToSend}"`);
+                await client.setBlockAttrs({ id: newId, attrs: { icon: iconToSend } });
+            }
+
             const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
             await client.updateBlock({ id: core.contentId, dataType: "markdown", data: newMd });
             if(Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: core.contentId, attrs: stylesToKeep });
@@ -297,8 +328,18 @@ class ItemProcessor {
         return null;
     }
 
+    emojiToHex(icon: string) {
+         if (!icon) return "";
+         if (icon.includes(".") || icon.includes("/")) return icon; 
+         // If it contains non-ASCII characters, assume it's a unicode emoji needing conversion
+         if (/[^\u0000-\u007F]/.test(icon)) {
+             return Array.from(icon).map(c => c.codePointAt(0)?.toString(16)).join("-");
+         }
+         return icon;
+    }
+
     async handlePullFromDoc(core: any, containerAttrs: any) {
-        console.log("[Sync] PullFromDoc Start", core.contentId);
+        console.log("[Sync Debug] PullFromDoc Start", core.contentId);
         if (!containerAttrs[ATTR_INDEX]) return;
         const docId = containerAttrs[ATTR_INDEX];
         const docAttrsRes = await client.getBlockAttrs({ id: docId });
@@ -306,9 +347,11 @@ class ItemProcessor {
         
         if (!docAttrs.title) return;
         const newTitle = docAttrs.title;
-        console.log("[Sync] New Title from Doc:", newTitle);
+        console.log("[Sync Debug] New Title from Doc:", newTitle);
         
         const newIconChar = this.resolveIcon(docAttrs.icon || DEFAULT_ICON);
+        console.log(`[Sync Debug] Pulling Icon. Raw: "${docAttrs.icon}", Resolved: "${newIconChar}"`);
+
         const newIconLink = `[${newIconChar}](siyuan://blocks/${docId})`;
 
         const currentAttrsRes = await client.getBlockAttrs({ id: core.contentId });
@@ -322,10 +365,13 @@ class ItemProcessor {
         let isSuccess = false;
 
         if (core.hasSeparator) {
+            // ... existing logic ...
             const iconRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)/;
             if (iconRegex.test(bodyMd)) {
+                console.log("[Sync Debug] Replacing existing icon link.");
                 bodyMd = bodyMd.replace(iconRegex, newIconLink);
             } else {
+                console.log("[Sync Debug] Prepending new icon link.");
                 bodyMd = newIconLink + " " + bodyMd.trimStart();
             }
 
@@ -337,18 +383,18 @@ class ItemProcessor {
             contentMd = contentMd.trim();
 
             const calculatedPureText = this.stripMarkdownSyntax(contentMd);
-            console.log("[Sync] Content MD:", contentMd);
-            console.log("[Sync] Calculated Pure Text:", calculatedPureText);
-            console.log("[Sync] Check includes:", contentMd.includes(calculatedPureText));
+            console.log("[Sync Debug] Content MD:", contentMd);
+            console.log("[Sync Debug] Calculated Pure Text:", calculatedPureText);
+            console.log("[Sync Debug] Check includes:", contentMd.includes(calculatedPureText));
 
             if (calculatedPureText && contentMd.includes(calculatedPureText)) {
                  if (calculatedPureText !== newTitle) {
-                    console.log(`[Sync] Updating text: "${calculatedPureText}" -> "${newTitle}"`);
+                    console.log(`[Sync Debug] Updating text: "${calculatedPureText}" -> "${newTitle}"`);
                     bodyMd = bodyMd.replace(calculatedPureText, newTitle);
                  }
                  isSuccess = true;
             } else {
-                 console.log("[Sync] Continuity check failed. Complex format detected.");
+                 console.log("[Sync Debug] Continuity check failed. Complex format detected.");
                  if (calculatedPureText !== newTitle) {
                      this.errors.push(core.containerId);
                  }
@@ -359,6 +405,7 @@ class ItemProcessor {
         if (core.hasSeparator) {
              finalMd = bodyMd + (originalIal ? " " + originalIal : "");
         } else {
+            console.log("[Sync Debug] Reconstructing list item from scratch.");
             let reconstructed = await this.constructListItemMarkdown(
                 core.containerId, 
                 containerAttrs[ATTR_OUTLINE], 
@@ -367,6 +414,7 @@ class ItemProcessor {
             finalMd = reconstructed + (originalIal ? " " + originalIal : "");
         }
 
+        console.log(`[Sync Debug] Final MD for Pull: ${finalMd}`);
         await client.updateBlock({ id: core.contentId, dataType: "markdown", data: finalMd });
 
         if (Object.keys(stylesToPreserve).length > 0) {
@@ -388,43 +436,14 @@ class ItemProcessor {
         const ialRegex = /(?:^|\s)(\{:[^}]+\})\s*$/;
         const match = core.markdown.match(ialRegex);
         const originalIal = match ? match[1] : ""; 
-        let bodyMd = core.markdown.replace(ialRegex, "").trimEnd();
 
-        if (core.hasSeparator) {
-            let contentMd = bodyMd;
-            const extractIconRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)\s*/;
-            contentMd = contentMd.replace(extractIconRegex, "");
-            const extractSepRegex = /^\s*(\[➖\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)|➖)\s*/;
-            contentMd = contentMd.replace(extractSepRegex, "");
-            contentMd = contentMd.trim();
-            
-            // Use stripped syntax for continuity check
-            let oldPureText = this.stripMarkdownSyntax(contentMd); 
-
-            if (oldPureText && contentMd.includes(oldPureText)) {
-                if (oldPureText !== newContentMd) { 
-                    bodyMd = bodyMd.replace(oldPureText, newContentMd);
-                }
-            } else {
-                // Continuity check failed (e.g. 1**2**), skip text update
-                this.errors.push(core.containerId);
-            }
-        }
-
-        // Construct final MD with potentially updated bodyMd (if check passed)
-        // If check failed, bodyMd retains original text (preserving format)
-        // Fallback reconstruction only happens if NO separator (which means it's not a synced item yet)
-        let finalMd = "";
-        if (core.hasSeparator) {
-            finalMd = bodyMd + (originalIal ? " " + originalIal : "");
-        } else {
-            let baseMd = await this.constructListItemMarkdown(
-                core.containerId, 
-                outlineId, 
-                newContentMd
-            );
-            finalMd = baseMd + (originalIal ? " " + originalIal : "");
-        }
+        // Always reconstruct for Rich Text sync, bypassing complex format checks
+        let baseMd = await this.constructListItemMarkdown(
+            core.containerId, 
+            outlineId, 
+            newContentMd
+        );
+        let finalMd = baseMd + (originalIal ? " " + originalIal : "");
 
         await client.updateBlock({ id: core.contentId, dataType: "markdown", data: finalMd });
         
@@ -457,8 +476,12 @@ class ItemProcessor {
             let icon = DEFAULT_ICON;
             try {
                  const docInfoRes = await client.getBlockAttrs({ id: docId });
-                 icon = this.resolveIcon(docInfoRes.data.icon || DEFAULT_ICON); 
-            } catch(e) {}
+                 const rawIcon = docInfoRes.data.icon || DEFAULT_ICON;
+                 icon = this.resolveIcon(rawIcon);
+                 console.log(`[Sync Debug] constructListItemMarkdown - DocId: ${docId}, Raw Icon: "${rawIcon}", Resolved Icon: "${icon}"`);
+            } catch(e) {
+                console.error("[Sync Debug] Failed to get doc icon:", e);
+            }
             parts.push(`[${icon}](siyuan://blocks/${docId})`);
         }
 
@@ -474,10 +497,16 @@ class ItemProcessor {
     resolveIcon(iconStr: string) {
         if (!iconStr) return DEFAULT_ICON;
         if (iconStr.includes(".") || iconStr.includes("/")) return DEFAULT_ICON;
+        
+        // Handle hex codes (including sequences like 1f469-200d-1f692)
         const hexRegex = /^[0-9a-fA-F]+(-[0-9a-fA-F]+)*$/;
         if (hexRegex.test(iconStr)) {
-            try { return String.fromCodePoint(...iconStr.split('-').map(s => parseInt(s, 16))); } 
-            catch (e) { return iconStr; }
+            try { 
+                return String.fromCodePoint(...iconStr.split('-').map(s => parseInt(s, 16))); 
+            } catch (e) { 
+                console.warn("[Sync Debug] Failed to resolve icon hex:", iconStr, e);
+                return iconStr; 
+            }
         }
         return iconStr;
     }
@@ -508,6 +537,20 @@ class ItemProcessor {
         let tempMd = md.replace(/\s*\{:[^}]+\}\s*$/, "");
         let hasSeparator = false;
 
+        // Try to extract current icon from the beginning of MD
+        // Matches standard emoji, :emoji:, or [icon](...)
+        let currentIcon = null;
+        const explicitIconRegex = /^(?:([\uD800-\uDBFF][\uDC00-\uDFFF])|(:[^:]+:)|\[(.*?)\]\(siyuan:\/\/blocks\/.*?\))\s*/;
+        const iconMatch = tempMd.match(explicitIconRegex);
+        console.log(`[Sync Debug] getCoreContentInfo - tempMd: "${tempMd}"`);
+        console.log(`[Sync Debug] getCoreContentInfo - iconMatch:`, iconMatch);
+        
+        if (iconMatch) {
+            // Group 1: Unicode Emoji, Group 2: :emoji:, Group 3: [icon](link) -> icon
+            currentIcon = iconMatch[1] || iconMatch[2] || iconMatch[3];
+            console.log(`[Sync Debug] getCoreContentInfo - Extracted currentIcon: "${currentIcon}"`);
+        }
+
         const docLinkRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)\s*/;
         if (docLinkRegex.test(tempMd)) {
             tempMd = tempMd.replace(docLinkRegex, "");
@@ -535,7 +578,8 @@ class ItemProcessor {
             syncText: plain.trim(),
             syncMd,
             markdown: md, 
-            content: content
+            content: content,
+            currentIcon 
         };
     }
 
