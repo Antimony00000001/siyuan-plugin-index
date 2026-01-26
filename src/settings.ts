@@ -69,7 +69,7 @@ class Settings{
     }
 
     async saveTo(config:string){
-        plugin.data[config]["docBuilder"] = plugin.data[CONFIG]["docBuilder"];
+        plugin.data[config]["builder"] = plugin.data[CONFIG]["builder"];
         await plugin.saveData(CONFIG, plugin.data[config]);
     }
 
@@ -115,7 +115,7 @@ export class SettingsProperty {
     depth: number;
     listType: string;
     linkType: string;
-    docBuilder: boolean;
+    builder: boolean;
     autoUpdate: boolean;
     col: number;
     fold: number;
@@ -129,7 +129,7 @@ export class SettingsProperty {
         this.depth = 0;
         this.listType = "unordered";
         this.linkType = "ref";
-        this.docBuilder = false;
+        this.builder = true;
         this.autoUpdate = true;
         this.col = 1;
         this.fold = 0;
@@ -144,7 +144,7 @@ export class SettingsProperty {
         this.depth = settings.get("depth");
         this.listType = settings.get("listType");
         this.linkType = settings.get("linkType");
-        this.docBuilder = settings.get("docBuilder");
+        this.builder = settings.get("builder");
         this.autoUpdate = settings.get("autoUpdate");
         this.col = settings.get("col");
         this.fold = settings.get("fold");

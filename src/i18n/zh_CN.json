@@ -83,9 +83,9 @@
           "embed": "引用"
         }
       },
-      "docBuilder": {
-        "title": "文档构建器 <span style='color: red;'>[测试功能]</span>",
-        "content": "启用后，当 <span style='color: orange;'>只选中一个块，且该块为列表块</span> 时，将出现该按钮<br><span style='color: blue;'>点击该按钮，能够根据无序列表层级来构建文档层级</span><br>请保证该块中 <span style='color: orange;'>只有列表块</span> ，以确保文档层次结构能够按预期的效果被构建<br>注：同级目录下，同名文件不会被重复创建，不要对已经成型的目录块进行操作，以免生成大量无用文档<br><span style='color: red;font-size: 16px;'>此功能在绝大多数情况下能够正常工作，但仍可能在极少数情况下产生无法预知的错误，因此使用前请务必先创建快照</span>"
+      "builder": {
+        "title": "构建器",
+        "content": "选中列表块或列表项，点击块标菜单中的插件图标，选择构建子文档或标题行。"
       },
       "subOutlineButton": {
         "title": "插入子文档目录及大纲",

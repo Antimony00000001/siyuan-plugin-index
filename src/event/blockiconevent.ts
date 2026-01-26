@@ -54,18 +54,18 @@ export function buildDoc({ detail }: any) {
 
     menu.addItem({
         icon: "iconDownload",
-        label: "📥 从子文档拉取",
-        click: () => syncManager(blockId, blockType, "PULL_FROM_DOC")
-    });
-
-    menu.addItem({
-        icon: "iconRef",
         label: "👇 构建标题行",
         click: () => syncManager(blockId, blockType, "PUSH_TO_BOTTOM")
     });
 
     menu.addItem({
-        icon: "iconRefresh",
+        icon: "iconDownload",
+        label: "📥 从子文档拉取",
+        click: () => syncManager(blockId, blockType, "PULL_FROM_DOC")
+    });
+
+    menu.addItem({
+        icon: "iconUpload",
         label: "👆 从标题行拉取",
         click: () => syncManager(blockId, blockType, "PULL_FROM_BOTTOM")
     });
@@ -169,21 +169,14 @@ class ItemProcessor {
     }
 
     async handlePushToBottom(core: any, containerAttrs: any, ctx: any) {
-        let cleanText = core.syncText;
-        cleanText = cleanText.replace(/^[📄➖\s]+/, ""); 
-        cleanText = cleanText.replace(/^\s*\*\*.*\*\*\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*\*.*\*\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*__.*__\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*_.+_\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*~~.*~~\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*`.*`\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*<.*>\s*$/,"").trim();
-        cleanText = cleanText.replace(/^\s*\[.*?\]\(.*\)\s*$/,"").trim();
-
-        if (!cleanText) cleanText = "Untitled";
+        // Use syncMd (rich text) instead of syncText (plain text)
+        let contentToPush = core.syncMd;
+        
+        // Fallback for empty content
+        if (!contentToPush) contentToPush = "Untitled";
 
         const prefix = "#".repeat(Math.min(ctx.level, 6));
-        const titleContent = `${prefix} ${cleanText}`; 
+        const titleContent = `${prefix} ${contentToPush}`; 
         
         const coreAttrsRes = await client.getBlockAttrs({ id: core.contentId });
         const stylesToKeep = this.filterSystemAttrs(coreAttrsRes.data);
