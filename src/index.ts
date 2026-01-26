@@ -2,7 +2,7 @@ import { Plugin } from "siyuan";
 import { setI18n, setPlugin } from "./utils";
 import { createDialog, initTopbar } from "./topbar";
 import { settings } from "./settings";
-import { buildDoc } from "./event/blockiconevent";
+import { buildDoc } from "./event/process-list";
 import { updateIndex } from "./event/protyleevent";
 import { initEmojiEvent, removeEmojiEvent } from "./event/emojievent";
 import { addSlash } from "./slash";

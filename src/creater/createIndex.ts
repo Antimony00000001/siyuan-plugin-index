@@ -336,7 +336,7 @@ async function getBlocksData(ids: string[]) {
 
 function filterIAL(ialStr: string) {
     if (!ialStr) return "";
-    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-id", "custom-outline-id", "title-img", "icon", "class", "refcount"]);
+    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-subdoc-id", "custom-index-heading-id", "title-img", "icon", "class", "refcount"]);
     
     // Match key="value" pairs, handling escaped quotes
     const parts = ialStr.match(/(\S+?)="([\s\S]*?)"/g);
