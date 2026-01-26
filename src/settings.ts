@@ -100,7 +100,6 @@ class Settings{
 
     loadSettingsforOutline(data: any){
         const def = new SettingsProperty();
-        this.set("at", data.at ?? def.at);
         this.set("outlineType", data.outlineType ?? def.outlineType);
         this.set("outlineAutoUpdate", data.outlineAutoUpdate ?? def.outlineAutoUpdate);
         this.set("listTypeOutline", data.listTypeOutline ?? def.listTypeOutline);
@@ -119,7 +118,6 @@ export class SettingsProperty {
     autoUpdate: boolean;
     col: number;
     fold: number;
-    at: boolean;
     outlineAutoUpdate: boolean;
     outlineType: string;
     listTypeOutline: string;
@@ -133,7 +131,6 @@ export class SettingsProperty {
         this.autoUpdate = true;
         this.col = 1;
         this.fold = 0;
-        this.at = true;
         this.outlineAutoUpdate = false;
         this.outlineType = "ref";
         this.listTypeOutline = "unordered";
@@ -148,7 +145,6 @@ export class SettingsProperty {
         this.autoUpdate = settings.get("autoUpdate");
         this.col = settings.get("col");
         this.fold = settings.get("fold");
-        this.at = settings.get("at");
         this.outlineAutoUpdate = settings.get("outlineAutoUpdate");
         this.outlineType = settings.get("outlineType");
         this.listTypeOutline = settings.get("listTypeOutline");

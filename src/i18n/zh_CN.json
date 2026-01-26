@@ -110,10 +110,6 @@
         "title": "<span style='color: red;'>目标笔记本</span>",
         "content": "选择要生成目录的笔记本"
       },
-      "at": {
-        "title": "大纲前缀",
-        "content": "启用后将会在大纲前加入<code class='fn__code'>@</code>符号"
-      },
       "outlineType": {
         "title": "链接类型",
         "content": "设置大纲链接类型",

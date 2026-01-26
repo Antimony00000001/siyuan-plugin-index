@@ -110,10 +110,6 @@
         "title": "<span style='color: red;'>Destination notebook</span>",
         "content": "Select the notebook to generate a directory"
       },
-      "at": {
-        "title": "Outline Prefix",
-        "content":"After activation, an <code class='fn__code'>@</code> symbol will be added before the outline."
-      },
       "outlineType": {
         "title": "Outline type",
         "content": "Set outline type",

@@ -131,12 +131,6 @@
                     settingValue={settingsStrings.listTypeOutline}
                 />
                 <SettingItem
-                    type="switch"
-                    content={i18n.settingsTab.items.at}
-                    settingKey="at"
-                    settingValue={settingsStrings.at}
-                />
-                <SettingItem
                     type="select"
                     content={i18n.settingsTab.items.outlineType}
                     settingKey="outlineType"

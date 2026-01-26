@@ -428,16 +428,15 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
 
         //置入数据
         let outlineType = settings.get("outlineType") == "copy" ? true : false;
-        let at = settings.get("at") ? "@" : "";
         let ialStr = ial ? `\n${indent}   {: ${ial}}` : "";
 
         if(outlineType){
             // Copy mode: keep formatting, maybe just escape severe breakers if needed?
             // For now, using raw name as it was likely intended to show formatted text.
-            data += `${at}${name}((${id} '*'))${ialStr}\n`;
+            data += `${name}((${id} '*'))${ialStr}\n`;
         } else {
             outlineType = settings.get("outlineType") == "ref" ? true : false;
-            let anchorText = at || "➖";
+            let anchorText = "➖";
             if (outlineType) {
                 // Link mode: [name](siyuan://blocks/id)
                 // Replicate ListBlockPlugin: [Anchor](Link) Text
