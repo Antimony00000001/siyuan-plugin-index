@@ -218,25 +218,54 @@ class ItemProcessor {
 
     async handlePushToDoc(core: any, containerAttrs: any, ctx: any) {
         const title = core.syncText;
-        if (!title) return null;
+        console.log(`[Sync Debug] handlePushToDoc - Core ContentId: ${core.contentId}, Extracted Title: "${title}"`);
+        
+        if (!title) {
+            console.log("[Sync Debug] Title is empty, aborting.");
+            return null;
+        }
 
         const coreAttrsRes = await client.getBlockAttrs({ id: core.contentId });
         const stylesToKeep = this.filterSystemAttrs(coreAttrsRes.data);
         let docId = containerAttrs[ATTR_INDEX];
+        console.log(`[Sync Debug] Found ATTR_INDEX (DocId): ${docId}`);
         
         if (docId) {
             const checkRes = await client.sql({ stmt: `SELECT id FROM blocks WHERE id = '${docId}' LIMIT 1` });
-            if (!checkRes.data[0]) docId = null;
+            if (!checkRes.data[0]) {
+                console.log(`[Sync Debug] DocId ${docId} not found in DB, resetting to null.`);
+                docId = null;
+            }
         }
 
         if (docId) {
-            await client.renameDoc({ id: docId, title: title });
+            console.log(`[Sync Debug] Renaming existing doc ${docId} to "${title}"`);
+            try {
+                const pathRes = await post("/api/filetree/getPathByID", { id: docId });
+                if (pathRes) {
+                    const { notebook, path } = pathRes;
+                    console.log(`[Sync Debug] Doc Path: ${path}, Notebook: ${notebook}`);
+                    await client.renameDoc({ notebook, path, title });
+                    console.log("[Sync Debug] Rename success.");
+                    
+                    // Verify title
+                    const verifyRes = await client.getBlockAttrs({ id: docId });
+                    console.log(`[Sync Debug] Post-rename Doc Title in DB: "${verifyRes?.data?.title}"`);
+                } else {
+                    console.error("[Sync Debug] Failed to get path for doc rename.");
+                }
+            } catch (e) {
+                console.error("[Sync Debug] Rename failed:", e);
+            }
+            
             const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
+            console.log(`[Sync Debug] Updating List Item MD to: ${newMd}`);
             await client.updateBlock({ id: core.contentId, dataType: "markdown", data: newMd });
             if(Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: core.contentId, attrs: stylesToKeep });
             return docId;
         }
 
+        console.log("[Sync Debug] Creating new document...");
         let notebook, path;
         if (ctx.parentId) {
             const parentPathRes = await post("/api/filetree/getPathByID", { id: ctx.parentId });
@@ -252,9 +281,12 @@ class ItemProcessor {
             notebook = pathRes.notebook;
             path = `${hPathRes}/${title}`;
         }
+        console.log(`[Sync Debug] New Doc Path: ${path} in Notebook: ${notebook}`);
 
         const newIdRes = await client.createDocWithMd({ notebook, path, markdown: "" });
         const newId = newIdRes.data;
+        console.log(`[Sync Debug] Created Doc ID: ${newId}`);
+
         if (newId) {
             await client.setBlockAttrs({ id: core.containerId, attrs: { [ATTR_INDEX]: newId } });
             const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
