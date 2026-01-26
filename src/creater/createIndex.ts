@@ -8,9 +8,10 @@ let indexQueue: IndexQueue;
 
 /**
  * 左键点击topbar按钮插入目录
+ * @param targetBlockId - Optional: The ID of the block to replace (e.g., from a slash command)
  * @returns void
  */
-export async function insert() {
+export async function insert(targetBlockId?: string) {
     //载入配置
     await settings.load();
 
@@ -36,7 +37,7 @@ export async function insert() {
     data = queuePopAll(indexQueue, data);
     console.log(data);
     if (data != '') {
-        await insertData(parentId, data, "index");
+        await insertData(parentId, data, "index", targetBlockId);
     } else {
         client.pushErrMsg({
             msg: i18n.errorMsg_miss,
@@ -91,9 +92,10 @@ export async function insertButton() {
 
 /**
  * 点击插入大纲
+ * @param targetBlockId - Optional: The ID of the block to replace (e.g., from a slash command)
  * @returns void
  */
-export async function insertDocButton() {
+export async function insertDocButton(targetBlockId?: string) {
     //载入配置
     await settings.load();
 
@@ -112,9 +114,11 @@ export async function insertDocButton() {
 
     let outlineData = await requestGetDocOutline(parentId);
     // console.log(outlineData);
-    data = insertOutline(data, outlineData, 0, 0);
+    let ids = collectOutlineIds(outlineData);
+    let extraData = await getBlocksData(ids);
+    data = insertOutline(data, outlineData, 0, 0, extraData);
     if (data != '') {
-        await insertData(parentId, data, "outline");
+        await insertData(parentId, data, "outline", targetBlockId);
     } else {
         client.pushErrMsg({
             msg: i18n.errorMsg_miss_outline,
@@ -247,15 +251,27 @@ export async function insertOutlineAuto(parentId: string) {
         });
         //载入配置
         let str = ial.data["custom-outline-create"];
-        // console.log(str);
-        settings.loadSettings(JSON.parse(str));
+        console.log("[IndexPlugin] AutoUpdate - Raw IAL String:", str);
+        
+        try {
+            let parsedSettings = JSON.parse(str);
+            console.log("[IndexPlugin] AutoUpdate - Parsed Settings:", parsedSettings);
+            settings.loadSettingsforOutline(parsedSettings);
+            console.log("[IndexPlugin] AutoUpdate - Applied 'outlineType':", settings.get("outlineType"));
+        } catch (e) {
+            console.error("[IndexPlugin] AutoUpdate - Failed to parse settings:", e);
+        }
+
         if (!settings.get("outlineAutoUpdate")) {
+            console.log("[IndexPlugin] AutoUpdate - Aborted: outlineAutoUpdate is false");
             return;
         }
         //插入目录
         let data = '';
         let outlineData = await requestGetDocOutline(parentId);
-        data = insertOutline(data, outlineData, 0, 0);
+        let ids = collectOutlineIds(outlineData);
+        let extraData = await getBlocksData(ids);
+        data = insertOutline(data, outlineData, 0, 0, extraData);
         // console.log(plugin.data);
         // console.log("data=" + data);
         if (data != '') {
@@ -288,7 +304,78 @@ async function requestGetDocOutline(blockId: string) {
     return result;
 }
 
-function insertOutline(data: string, outlineData: any[], tab: number, stab: number) {
+function collectOutlineIds(outlineData: any[], ids: string[] = []) {
+    for (const item of outlineData) {
+        ids.push(item.id);
+        if (item.blocks) collectOutlineIds(item.blocks, ids);
+        if (item.children) collectOutlineIds(item.children, ids);
+    }
+    return ids;
+}
+
+async function getBlocksData(ids: string[]) {
+    if (ids.length === 0) return {};
+    // Split IDs into chunks to avoid too long SQL statements (SiYuan/SQLite limit)
+    const chunkSize = 100;
+    const result: Record<string, { ial: string, markdown: string }> = {};
+    
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const idList = chunk.map(id => `'${id}'`).join(',');
+        const response = await client.sql({
+            stmt: `SELECT id, ial, markdown FROM blocks WHERE id IN (${idList})`
+        });
+        if (response.data) {
+            for (const row of response.data) {
+                result[row.id] = { ial: row.ial, markdown: row.markdown };
+            }
+        }
+    }
+    return result;
+}
+
+function filterIAL(ialStr: string) {
+    if (!ialStr) return "";
+    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-id", "custom-outline-id", "title-img", "icon", "class", "refcount"]);
+    
+    // Match key="value" pairs, handling escaped quotes
+    const parts = ialStr.match(/(\S+?)="([\s\S]*?)"/g);
+    if (!parts) return "";
+    
+    const filtered = parts.filter(part => {
+        const key = part.match(/^(\S+?)=/)?.[1];
+        return key && !ignoreAttrs.has(key);
+    });
+    
+    return filtered.join(" ");
+}
+
+function extractHeadingContent(markdown: string) {
+    if (!markdown) return "";
+    // Remove heading marks
+    let content = markdown.replace(/^#+\s+/, "").trim();
+    // Remove IAL at the end
+    content = content.replace(/\s*\{:[^}]+\}\s*$/, "").trim();
+    return content;
+}
+
+// Clean and escape content for outline
+function cleanAndEscape(content: string, forRef: boolean) {
+    // Remove block refs ((id "text")) or ((id 'text'))
+    let clean = content.replace(/\(\([0-9a-z-]+\s+['"](.*?)['"]\)\)/g, "$1");
+    // Remove links [text](url) -> text
+    clean = clean.replace(/\[(.*?)\]\(.*?\)/g, "$1");
+    
+    if (forRef) {
+        // ((id 'content')) - escape single quotes
+        return clean.replace(/'/g, "&apos;");
+    } else {
+        // [content](url) - escape brackets
+        return clean.replace(/\[/g, "\\[").replace(/\]/g, "\\]");
+    }
+}
+
+function insertOutline(data: string, outlineData: any[], tab: number, stab: number, extraData?: Record<string, { ial: string, markdown: string }>) {
 
     tab++;
 
@@ -297,56 +384,77 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
     for (let outline of outlineData) {
         let id = outline.id;
         let name = "";
-        if (outline.depth == 0) {
-            name = outline.name;
+        let ial = "";
+
+        if (extraData && extraData[id]) {
+            name = extractHeadingContent(extraData[id].markdown) || (outline.depth == 0 ? outline.name : outline.content);
+            ial = filterIAL(extraData[id].ial);
         } else {
-            name = outline.content;
+            if (outline.depth == 0) {
+                name = outline.name;
+            } else {
+                name = outline.content;
+            }
         }
 
+        // Add debug log
+        console.log("insertOutline debug:", { name, id, depth: outline.depth });
+
+        let indent = "";
         // let icon = doc.icon;
         let subOutlineCount = outline.count;
         for (let n = 1; n <= stab; n++) {
-            data += '    ';
+            indent += '    ';
         }
 
-        data += "> ";
+        indent += "> ";
 
         for (let n = 1; n < tab - stab; n++) {
-            data += '    ';
+            indent += '    ';
         }
 
-        //转义
-        name = escapeHtml(name);
+        // Removed global escapeHtml(name)
 
         //应用设置
         let listType = settings.get("listTypeOutline") == "unordered" ? true : false;
+        let listMarker = "";
         if (listType) {
-            data += "* ";
+            listMarker = "* ";
         } else {
-            data += "1. ";
+            listMarker = "1. ";
         }
+
+        data += indent + listMarker;
 
         //置入数据
         let outlineType = settings.get("outlineType") == "copy" ? true : false;
         let at = settings.get("at") ? "@" : "";
+        let ialStr = ial ? `\n${indent}   {: ${ial}}` : "";
 
         if(outlineType){
-            data += `${at}${name}((${id} '*'))\n`;
+            // Copy mode: keep formatting, maybe just escape severe breakers if needed?
+            // For now, using raw name as it was likely intended to show formatted text.
+            data += `${at}${name}((${id} '*'))${ialStr}\n`;
         } else {
             outlineType = settings.get("outlineType") == "ref" ? true : false;
+            let anchorText = at || "➖";
             if (outlineType) {
-                data += `[${at}${name}](siyuan://blocks/${id})\n`;
+                // Link mode: [name](siyuan://blocks/id)
+                // Replicate ListBlockPlugin: [Anchor](Link) Text
+                data += `[${anchorText}](siyuan://blocks/${id}) ${name}${ialStr}\n`;
             } else {
-                data += `((${id} '${at}${name}'))\n`;
+                // Block Ref mode: ((id 'name'))
+                // Replicate ListBlockPlugin: ((Ref)) Text
+                data += `((${id} '${anchorText}')) ${name}${ialStr}\n`;
             }
         }
         
         //`((id "锚文本"))`
         if (subOutlineCount > 0) {//获取下一层级子文档
             if (outline.depth == 0) {
-                data = insertOutline(data, outline.blocks, tab, stab);
+                data = insertOutline(data, outline.blocks, tab, stab, extraData);
             } else {
-                data = insertOutline(data, outline.children, tab, stab);
+                data = insertOutline(data, outline.children, tab, stab, extraData);
             }
         }
 
@@ -452,7 +560,9 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                 }
                 
                 let outlineData = await requestGetDocOutline(id);
-                data = insertOutline(data, outlineData, tab, tab);
+                let outlineIds = collectOutlineIds(outlineData);
+                let extraData = await getBlocksData(outlineIds);
+                data = insertOutline(data, outlineData, tab, tab, extraData);
 
                 let item = new IndexQueueNode(tab, data);
                 pitem.push(item);
@@ -554,7 +664,8 @@ export async function insertDataSimple(id: string, data: string) {
 }
 
 //插入数据
-async function insertData(id: string, data: string, type: string) {
+async function insertData(id: string, data: string, type: string, targetBlockId?: string) {
+    console.log("[IndexPlugin] insertData called with:", { id, type, targetBlockId });
 
     let attrs : any;
 
@@ -572,21 +683,46 @@ async function insertData(id: string, data: string, type: string) {
         let rs = await client.sql({
             stmt: `SELECT * FROM blocks WHERE root_id = '${id}' AND ial like '%custom-${type}-create%' order by updated desc limit 1`
         });
+        console.log("[IndexPlugin] Existing block check:", rs.data[0]);
+
         if (rs.data[0]?.id == undefined) {
-            let result = await client.insertBlock({
-                data: data,
-                dataType: 'markdown',
-                parentID: id
-            });
-            await client.setBlockAttrs({
-                attrs: attrs,
-                id: result.data[0].doOperations[0].id
-            });
-            client.pushMsg({
-                msg: i18n.msg_success,
-                timeout: 3000
-            });
+            // No existing index/outline found
+            if (targetBlockId) {
+                console.log("[IndexPlugin] Updating target block (Slash command):", targetBlockId);
+                // Slash command: Replace the slash command block with new content
+                let result = await client.updateBlock({
+                    data: data,
+                    dataType: 'markdown',
+                    id: targetBlockId
+                });
+                await client.setBlockAttrs({
+                    attrs: attrs,
+                    id: result.data[0].doOperations[0].id
+                });
+                client.pushMsg({
+                    msg: i18n.msg_success,
+                    timeout: 3000
+                });
+            } else {
+                console.log("[IndexPlugin] Inserting new block (Button)");
+                // Topbar button: Append new block
+                let result = await client.insertBlock({
+                    data: data,
+                    dataType: 'markdown',
+                    parentID: id
+                });
+                await client.setBlockAttrs({
+                    attrs: attrs,
+                    id: result.data[0].doOperations[0].id
+                });
+                client.pushMsg({
+                    msg: i18n.msg_success,
+                    timeout: 3000
+                });
+            }
         } else {
+            console.log("[IndexPlugin] Updating existing block:", rs.data[0].id);
+            // Existing index/outline found
             let result = await client.updateBlock({
                 data: data,
                 dataType: 'markdown',
@@ -596,12 +732,22 @@ async function insertData(id: string, data: string, type: string) {
                 attrs: attrs,
                 id: result.data[0].doOperations[0].id
             });
+            
+            // If invoked via slash command, delete the slash command block since we updated the existing one
+            if (targetBlockId) {
+                console.log("[IndexPlugin] Deleting target block (duplicate/cleanup):", targetBlockId);
+                await client.deleteBlock({
+                    id: targetBlockId
+                });
+            }
+
             client.pushMsg({
                 msg: i18n.update_success,
                 timeout: 3000
             });
         }
     } catch (error) {
+        console.error("[IndexPlugin] insertData error:", error);
         client.pushErrMsg({
             msg: i18n.dclike,
             timeout: 3000

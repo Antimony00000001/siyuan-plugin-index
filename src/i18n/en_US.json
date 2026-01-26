@@ -83,9 +83,9 @@
             "embed": "Embed"
         }
       },
-      "docBuilder": {
-        "title": "Document Builder <span style='color: red;'>[Beta]</span>",
-        "content":"When enabled, when only one block is selected and it is a list block, this button will appear. Clicking this button can construct a document hierarchy based on an unordered list hierarchy<br>Please ensure that there is only a list block in this block to ensure that the document hierarchy is constructed as expected<br>Note: In the same level directory, files with the same name will not be created repeatedly. Do not operate on formed directory blocks to avoid generating a large number of useless documents.<br><span style='color: red;font-size: 16px;'>This feature works normally in the vast majority of cases, but it may still cause unpredictable errors in rare cases. Therefore, it is important to create a snapshot before using it.</span>"
+      "builder": {
+        "title": "Builder",
+        "content": "Select a list block or item, click the plugin icon in the block menu, and choose Build Sub-doc or Heading."
       },
       "subOutlineButton": {
         "title": "insert sub doc and outline",

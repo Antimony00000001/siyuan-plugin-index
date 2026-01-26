@@ -1,19 +1,31 @@
-import { insertDataSimple } from "../creater/createIndex";
 import { IndexStackNode, IndexStack } from "../indexnode";
 import { settings } from "../settings";
 import { client, i18n } from "../utils";
 import { getProcessedDocIcon } from "../creater/createIndex";
 
+// Constants
+const ATTR_INDEX = "custom-index-id";
+const ATTR_OUTLINE = "custom-outline-id";
+const SEP_CHAR = "➖";
+const DEFAULT_ICON = "📄";
+
 // Helper to strip icon prefixes from text
 const stripIconPrefix = (text: string) => {
-    // Matches leading emojis (like 📑, 📄) or :word: patterns
-    // Also matches `[<anything>](siyuan://blocks/<id>) ` pattern to catch previously generated links with icons
     const iconOrLinkRegex = /^(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|:\w+:|\[.*?\]\(siyuan:\/\/blocks\/.*?\))\s*/;
     return text.replace(iconOrLinkRegex, '').trim();
 };
 
-//目录栈
-let indexStack : IndexStack;
+// API Helper
+async function post(url: string, data: any) {
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    });
+    const res = await response.json();
+    if (res.code !== 0) throw new Error(res.msg);
+    return res.data;
+}
 
 /**
  * 块标菜单回调
@@ -21,271 +33,569 @@ let indexStack : IndexStack;
  * @returns void
  */
 export function buildDoc({ detail }: any) {
-    //如果选中块大于1或不是列表块或未开启按钮，则直接结束
-    if (detail.blockElements.length > 1 || 
-        detail.blockElements[0].getAttribute('data-type') != "NodeList" ||
-        !settings.get("docBuilder")) {
-        return;
+    const { menu, blockElements } = detail;
+    if (!blockElements || blockElements.length === 0) return;
+
+    const blockElement = blockElements[0];
+    const blockId = blockElement.getAttribute("data-node-id");
+    const blockType = blockElement.getAttribute("data-type");
+
+    // Only show for List or ListItem
+    if (blockType !== "NodeList" && blockType !== "NodeListItem") return;
+
+    // Add Smart Selector menu items
+    menu.addSeparator();
+
+    menu.addItem({
+        icon: "iconUpload",
+        label: "📤 构建子文档",
+        click: () => syncManager(blockId, blockType, "PUSH_TO_DOC")
+    });
+
+    menu.addItem({
+        icon: "iconDownload",
+        label: "👇 构建标题行",
+        click: () => syncManager(blockId, blockType, "PUSH_TO_BOTTOM")
+    });
+
+    menu.addItem({
+        icon: "iconDownload",
+        label: "📥 从子文档拉取",
+        click: () => syncManager(blockId, blockType, "PULL_FROM_DOC")
+    });
+
+    menu.addItem({
+        icon: "iconUpload",
+        label: "👆 从标题行拉取",
+        click: () => syncManager(blockId, blockType, "PULL_FROM_BOTTOM")
+    });
+}
+
+async function syncManager(sourceBlockId: string, sourceType: string, actionType: string) {
+    try {
+      const processor = new ItemProcessor();
+      await processor.processRecursive(sourceBlockId, sourceType, actionType);
+      
+      if (processor.errors.length > 0) {
+          client.pushMsg({
+              msg: `⚠️ 部分条目因格式复杂未更新文本 (x${processor.errors.length})，仅更新了图标`,
+              timeout: 5000
+          });
+      } else {
+          client.pushMsg({
+              msg: "✅ 同步完成",
+              timeout: 3000
+          });
+      }
+    } catch (e) {
+      console.error(e);
+      client.pushErrMsg({
+          msg: `同步失败: ${e.message}`,
+          timeout: 5000
+      });
     }
-    //插入按钮到块菜单
-    detail.menu.addItem({
-        icon: "iconList",
-        label: i18n.settingsTab.items.docBuilder.title,
-        click: async () => {
-            await parseBlockDOM(detail);
+}
+
+class ItemProcessor {
+    errors: string[] = [];
+
+    async processRecursive(blockId: string, type: string, actionType: string, ctx: any = null) {
+        if (!ctx) {
+            ctx = { previousId: null, parentId: null, level: 1 };
         }
-    });
-}
-
-/**
- * 解析detail中块的DOM
- * @param detail 
- */
-async function parseBlockDOM(detail: any) {
-    indexStack = new IndexStack();
-    indexStack.notebookId = detail.protyle.notebookId;
-    let docId = detail.blockElements[0].getAttribute("data-node-id");
-    let block = detail.blockElements[0].childNodes;
-    let blockElement = detail.blockElements[0];
-
-    let initialListType = "unordered"; // Default
-    const subType = blockElement.getAttribute('data-subtype');
-    if (subType === 'o') {
-        initialListType = "ordered";
-    } else if (subType === 't') {
-        initialListType = "task";
-    }
-    indexStack.basePath = await getRootDoc(docId);
-    // We still need docData for pPath, so let's get it separately
-    let docDataForPath = await client.getBlockInfo({
-        id: detail.protyle.block.rootID
-    });
-    indexStack.pPath = docDataForPath.data.path.slice(0, -3);
-    await parseChildNodes(block,indexStack,0,initialListType);
-    await stackPopAll(indexStack);
-
-    // Call the new function to reconstruct the markdown for the list
-    let reconstructedMarkdown = await reconstructListMarkdownWithLinks(detail.blockElements[0], indexStack);
-
-    // Update the original list block with the reconstructed markdown
-    if (reconstructedMarkdown !== '') {
-        await client.updateBlock({
-            id: docId, // Update the root NodeList block
-            data: reconstructedMarkdown,
-            dataType: 'markdown',
-        });
-    } else {
-        client.pushErrMsg({
-            msg: i18n.errorMsg_miss,
-            timeout: 3000
-        });
-    }
-}
-
-async function parseChildNodes(childNodes: any, currentStack: IndexStack, tab = 0, parentListType: string) {
-    tab++;
-    for (const childNode of childNodes) { // childNode is a NodeListItem
-        if (childNode.getAttribute('data-type') == "NodeListItem") {
-            let sChildNodes = childNode.childNodes;
-            let itemText = "";
-            let existingBlockId = ""; // This is for the generated page ID.
-            let subListNodes = [];
-            let cleanMarkdown = "";
-
-            for (const sChildNode of sChildNodes) {
-                if (sChildNode.getAttribute('data-type') == "NodeParagraph") {
-                    const paragraphId = sChildNode.getAttribute('data-node-id');
-                    const paragraphContent = sChildNode.innerHTML;
-
-                    try {
-                        const kramdownResponse = await client.getBlockKramdown({ id: paragraphId });
-                        if (kramdownResponse?.data?.kramdown) {
-                            let kramdown = kramdownResponse.data.kramdown.split('\n')[0];
-
-                            const finalizedMatch = kramdown.match(/^\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)\s*--\s*(.*)$/s);
-
-                            if (finalizedMatch) { // Run 2+ with the "ICON -- CONTENT" format
-                                existingBlockId = finalizedMatch[2]; // The generated page ID
-                                cleanMarkdown = finalizedMatch[3].trim();   // The original content part
-                                itemText = window.Lute.BlockDOM2Content(paragraphContent).replace(/^.*?--\s*/, "").trim();
-                            } else { // First run or other format
-                                cleanMarkdown = kramdown.replace(/\s*{:.*?}\s*/g, '').trim();
-                                itemText = stripIconPrefix(window.Lute.BlockDOM2Content(paragraphContent)).trim();
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`[Parse][Error] Failed to get kramdown for ${paragraphId}`, e);
-                    }
-
-                    if (!cleanMarkdown) {
-                        cleanMarkdown = itemText; // Fallback
-                    }
-
-                } else if (sChildNode.getAttribute('data-type') == "NodeList") {
-                    subListNodes.push(sChildNode);
-                }
-            }
-
-            let currentItemType = parentListType;
-            let taskStatus = "";
-            if (currentItemType === "task") {
-                const taskMarkerElement = childNode.querySelector('[data-type="NodeTaskListItemMarker"]');
-                taskStatus = (taskMarkerElement && taskMarkerElement.getAttribute('data-task') === 'true') ? "[x]" : "[ ]";
-            }
-            let existingSubFileCount = 0;
-            
-            let contentBlockId;
-            const refMatch = cleanMarkdown.match(/\(\((.*?)\s/);
-            if (refMatch) {
-                contentBlockId = refMatch[1];
-            } else {
-                const linkMatch = cleanMarkdown.match(/siyuan:\/\/blocks\/(.*?)\)/);
-                if (linkMatch) {
-                    contentBlockId = linkMatch[1];
-                }
-            }
-
-            if (contentBlockId) {
-                try {
-                    let blockInfo = await client.getBlockInfo({ id: contentBlockId });
-                    if (blockInfo && blockInfo.data) {
-                        existingSubFileCount = blockInfo.data.subFileCount || 0;
-                    }
-                } catch(e) { /* ignore if block not found */ }
-            }
-            let existingIcon = existingSubFileCount > 0 ? "📑" : "📄";
-
-            let item = new IndexStackNode(tab, itemText, currentItemType, taskStatus, existingIcon, existingSubFileCount, existingBlockId, cleanMarkdown);
-            currentStack.push(item);
-
-            for (const subListNode of subListNodes) {
-                let subListType = "unordered";
-                const subType = subListNode.getAttribute('data-subtype');
-                if (subType === 'o') subListType = "ordered";
-                else if (subType === 't') subListType = "task";
-                await parseChildNodes(subListNode.childNodes, item.children, tab, subListType);
-            }
-        }
-    }
-}
-
-async function getRootDoc(id:string){
-    let response = await client.sql({
-        stmt: `SELECT hpath FROM blocks WHERE id = '${id}'`
-    });
-    let result = response.data[0];
-    return result?.hpath;
-}
-
-async function createDoc(notebookId:string,hpath:string){
-    const escapedHpath = hpath.replace(/'/g, "''");
-    let existingDocResponse = await client.sql({
-        stmt: `SELECT id FROM blocks WHERE hpath = '${escapedHpath}' AND type = 'd' AND box = '${notebookId}'`
-    });
-
-    if (existingDocResponse.data && existingDocResponse.data.length > 0) {
-        return existingDocResponse.data[0].id;
-    } else {
-        await new Promise(resolve => setTimeout(resolve, 50));
-        let response = await client.createDocWithMd({
-            markdown: "",
-            notebook: notebookId,
-            path: hpath
-        });
-        return response.data;
-    }
-}
-
-async function stackPopAll(stack:IndexStack){
-    for (let i = stack.stack.length - 1; i >= 0; i--) {
-        const item = stack.stack[i];
-        const text = item.text;
-        const subPath = stack.basePath+"/"+text;
         
-        if (!item.blockId) {
-            item.blockId = await createDoc(indexStack.notebookId, subPath);
-        }
-        let currentBlockId = item.blockId;
+        const shouldReverse = actionType === "PUSH_TO_DOC";
 
-        item.documentPath = stack.pPath + "/" + currentBlockId;
+        if (type === "NodeListItem" || type === "i") {
+            const resultId = await this.processSingleItem(blockId, actionType, ctx);
+            if (resultId) ctx.previousId = resultId;
 
-        try {
-            let blockInfo = await client.getBlockInfo({ id: currentBlockId });
-            let docsInParent = await client.listDocsByPath({
-                notebook: indexStack.notebookId,
-                path: stack.pPath
+            const childCtx = {
+                previousId: ctx.previousId,
+                parentId: (actionType === "PUSH_TO_DOC" || actionType === "PULL_FROM_DOC") ? resultId : ctx.parentId,
+                level: ctx.level + 1
+            };
+
+            let childrenRes = await client.sql({
+                stmt: `SELECT id, type, subtype FROM blocks WHERE parent_id = '${blockId}' AND type = 'l' ORDER BY sort ASC`
             });
+            let children = childrenRes.data || [];
+            if (shouldReverse) children = children.reverse();
 
-            let foundDocIcon = null;
-            if (docsInParent?.data?.files) {
-                const matchingDoc = docsInParent.data.files.find(doc => doc.id === currentBlockId);
-                if (matchingDoc) foundDocIcon = matchingDoc.icon;
+            for (const child of children) {
+                await this.processRecursive(child.id, "NodeList", actionType, childCtx);
+                ctx.previousId = childCtx.previousId;
             }
+            return resultId;
 
-            if (blockInfo?.data) {
-                item.subFileCount = blockInfo.data.subFileCount || 0;
-                item.icon = foundDocIcon || (item.subFileCount > 0 ? "📑" : "📄");
+        } else if (type === "NodeList" || type === "l") { 
+            let childrenRes = await client.sql({
+                stmt: `SELECT id, type FROM blocks WHERE parent_id = '${blockId}' AND type = 'i' ORDER BY sort ASC`
+            });
+            let children = childrenRes.data || [];
+            if (shouldReverse) children = children.reverse();
+            
+            for (const child of children) {
+                await this.processRecursive(child.id, "NodeListItem", actionType, ctx);
             }
-        } catch (e) {
-            console.error(`[StackPop] Error processing block info for ${currentBlockId}:`, e);
-            item.icon = item.subFileCount > 0 ? "📑" : "📄"; // Fallback icon
-        }
-
-        if(!item.children.isEmpty()){
-            item.children.basePath = subPath;
-            item.children.pPath = item.documentPath;
-            await stackPopAll(item.children);
         }
     }
-}
 
-async function reconstructListMarkdownWithLinks(originalListElement: HTMLElement, currentStack: IndexStack, indentLevel: number = 0, orderedListCounters: { [key: number]: number } = {}): Promise<string> {
-    let markdown = "";
-    const originalListItems = originalListElement.children;
-    let stackIndex = 0;
+    async processSingleItem(listItemId: string, actionType: string, ctx: any) {
+        const core = await this.getCoreContentInfo(listItemId);
+        if (!core) return ctx.previousId;
 
-    if (currentStack.stack.length > 0 && currentStack.stack[0].listType === "ordered" && !orderedListCounters[indentLevel]) {
-        orderedListCounters[indentLevel] = 1;
+        const containerAttrsRes = await client.getBlockAttrs({ id: core.containerId });
+        const containerAttrs = containerAttrsRes.data;
+        let resultId = ctx.previousId;
+
+        switch (actionType) {
+            case "PUSH_TO_DOC":
+                resultId = await this.handlePushToDoc(core, containerAttrs, ctx);
+                break;
+            case "PULL_FROM_DOC":
+                await this.handlePullFromDoc(core, containerAttrs);
+                if (containerAttrs[ATTR_INDEX]) resultId = containerAttrs[ATTR_INDEX];
+                break;
+            case "PUSH_TO_BOTTOM":
+                resultId = await this.handlePushToBottom(core, containerAttrs, ctx);
+                break;
+            case "PULL_FROM_BOTTOM":
+                await this.handlePullFromBottom(core, containerAttrs);
+                if (containerAttrs[ATTR_OUTLINE]) resultId = containerAttrs[ATTR_OUTLINE];
+                break;
+        }
+        return resultId || ctx.previousId;
     }
 
-    for (const originalListItem of Array.from(originalListItems)) {
-        if (originalListItem instanceof HTMLElement && originalListItem.getAttribute('data-type') === "NodeListItem") {
-            const paragraphElement = originalListItem.querySelector('[data-type="NodeParagraph"]');
-            if (paragraphElement) {
-                let itemTextFromDOM = window.Lute.BlockDOM2Content(paragraphElement.innerHTML);
-                
-                let comparableItemText = itemTextFromDOM.includes(' -- ')
-                    ? itemTextFromDOM.replace(/^.*?--\s*/, "").trim()
-                    : stripIconPrefix(itemTextFromDOM);
+    async handlePushToBottom(core: any, containerAttrs: any, ctx: any) {
+        // Use syncMd (rich text) instead of syncText (plain text)
+        let contentToPush = core.syncMd;
+        
+        // Fallback for empty content
+        if (!contentToPush) contentToPush = "Untitled";
 
-                const correspondingIndexNode = currentStack.stack[stackIndex];
+        const prefix = "#".repeat(Math.min(ctx.level, 6));
+        const titleContent = `${prefix} ${contentToPush}`; 
+        
+        const coreAttrsRes = await client.getBlockAttrs({ id: core.contentId });
+        const stylesToKeep = this.filterSystemAttrs(coreAttrsRes.data);
+        let targetId = containerAttrs[ATTR_OUTLINE];
+        const previousTargetId = ctx.previousId;
 
-                if (correspondingIndexNode && correspondingIndexNode.text === comparableItemText.replace(/!\[\]\([^)]*\)/g, '').trim() && correspondingIndexNode.blockId) {
-                    let prefix = "    ".repeat(indentLevel);
-                    if (correspondingIndexNode.listType === "ordered") {
-                        prefix += `${orderedListCounters[indentLevel]++}. `;
-                    } else if (correspondingIndexNode.listType === "task") {
-                        prefix += `- ${correspondingIndexNode.taskStatus} `;
-                    } else { // unordered
-                        prefix += "- ";
+        let targetExists = false;
+        if (targetId) {
+             const checkRes = await client.sql({ stmt: `SELECT id FROM blocks WHERE id = '${targetId}' LIMIT 1` });
+             targetExists = !!checkRes.data[0];
+        }
+
+        if (!targetId || !targetExists) {
+            let r;
+            if (previousTargetId) {
+                r = await client.insertBlock({ previousID: previousTargetId, dataType: "markdown", data: titleContent });
+            } else {
+                const rootIdRes = await client.sql({ stmt: `SELECT root_id FROM blocks WHERE id = '${core.containerId}' LIMIT 1` });
+                const rootId = rootIdRes.data[0]?.root_id;
+                r = await client.appendBlock({ parentID: rootId, dataType: "markdown", data: titleContent });
+            }
+            
+            targetId = r?.data?.[0]?.doOperations?.[0]?.id;
+            if (targetId) {
+                await client.setBlockAttrs({ id: core.containerId, attrs: { [ATTR_OUTLINE]: targetId } });
+                if (Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: targetId, attrs: stylesToKeep });
+            }
+        } else {
+            await client.updateBlock({ id: targetId, dataType: "markdown", data: titleContent });
+            if (Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: targetId, attrs: stylesToKeep });
+        }
+
+        const finalMd = await this.constructListItemMarkdown(core.containerId, targetId, core.syncMd);
+        await client.updateBlock({ id: core.contentId, dataType: "markdown", data: finalMd });
+        if (Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: core.contentId, attrs: stylesToKeep });
+
+        return targetId;
+    }
+
+    async handlePushToDoc(core: any, containerAttrs: any, ctx: any) {
+        const title = core.syncText;
+        console.log(`[Sync Debug] handlePushToDoc - Core ContentId: ${core.contentId}, Extracted Title: "${title}", Extracted Icon: "${core.currentIcon}"`);
+        
+        if (!title) {
+            console.log("[Sync Debug] Title is empty, aborting.");
+            return null;
+        }
+
+        const coreAttrsRes = await client.getBlockAttrs({ id: core.contentId });
+        const stylesToKeep = this.filterSystemAttrs(coreAttrsRes.data);
+        let docId = containerAttrs[ATTR_INDEX];
+        console.log(`[Sync Debug] Found ATTR_INDEX (DocId): ${docId}`);
+        
+        if (docId) {
+            const checkRes = await client.sql({ stmt: `SELECT id FROM blocks WHERE id = '${docId}' LIMIT 1` });
+            if (!checkRes.data[0]) {
+                console.log(`[Sync Debug] DocId ${docId} not found in DB, resetting to null.`);
+                docId = null;
+            }
+        }
+
+        if (docId) {
+            console.log(`[Sync Debug] Renaming existing doc ${docId} to "${title}"`);
+            try {
+                const pathRes = await post("/api/filetree/getPathByID", { id: docId });
+                if (pathRes) {
+                    const { notebook, path } = pathRes;
+                    console.log(`[Sync Debug] Doc Path: ${path}, Notebook: ${notebook}`);
+                    await client.renameDoc({ notebook, path, title });
+                    console.log("[Sync Debug] Rename success.");
+                    
+                    // Verify title
+                    const verifyRes = await client.getBlockAttrs({ id: docId });
+                    const docIconRaw = verifyRes?.data?.icon || "";
+                    console.log(`[Sync Debug] Post-rename Doc Status - Title: "${verifyRes?.data?.title}", Icon: "${docIconRaw}"`);
+
+                    // Sync Icon if different
+                    if (core.currentIcon) {
+                        const resolvedDocIcon = this.resolveIcon(docIconRaw);
+                        // Compare the resolved character (e.g. "😒") with core.currentIcon ("😒")
+                        if (resolvedDocIcon !== core.currentIcon) {
+                            console.log(`[Sync Debug] Icon mismatch. Doc (resolved): "${resolvedDocIcon}", List: "${core.currentIcon}". Updating...`);
+                            
+                            // Convert to hex for SiYuan API
+                            const iconToSend = this.emojiToHex(core.currentIcon);
+                            console.log(`[Sync Debug] Sending icon as hex: "${iconToSend}"`);
+
+                            const setRes = await client.setBlockAttrs({ id: docId, attrs: { icon: iconToSend } });
+                            console.log(`[Sync Debug] setBlockAttrs result:`, setRes);
+                            
+                            const finalVerify = await client.getBlockAttrs({ id: docId });
+                            console.log(`[Sync Debug] Final Doc Icon in DB: "${finalVerify?.data?.icon}"`);
+                        } else {
+                            console.log("[Sync Debug] Icon already matches.");
+                        }
                     }
-                    
-                    const gdcIconInput = correspondingIndexNode.icon;
-                    const gdcHasChildInput = correspondingIndexNode.subFileCount != undefined && correspondingIndexNode.subFileCount != 0;
-                    let iconPrefix = `${getProcessedDocIcon(gdcIconInput, gdcHasChildInput)} `;
-                    
-                    const node = correspondingIndexNode;
 
-                    markdown += `${prefix}[${iconPrefix.trim()}](siyuan://blocks/${node.blockId}) -- ${node.originalMarkdown}\n`;
-                    
-                    const nestedListElement = originalListItem.querySelector('[data-type="NodeList"]');
-                    if (nestedListElement instanceof HTMLElement && !correspondingIndexNode.children.isEmpty()) {
-                        markdown += await reconstructListMarkdownWithLinks(nestedListElement, correspondingIndexNode.children, indentLevel + 1, { ...orderedListCounters });
-                    }
+                } else {
+                    console.error("[Sync Debug] Failed to get path for doc rename.");
                 }
+            } catch (e) {
+                console.error("[Sync Debug] Rename/Icon Sync failed:", e);
             }
-            stackIndex++;
+            
+            const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
+            console.log(`[Sync Debug] Updating List Item MD to: ${newMd}`);
+            await client.updateBlock({ id: core.contentId, dataType: "markdown", data: newMd });
+            if(Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: core.contentId, attrs: stylesToKeep });
+            return docId;
+        }
+
+        console.log("[Sync Debug] Creating new document...");
+        let notebook, path;
+        if (ctx.parentId) {
+            const parentPathRes = await post("/api/filetree/getPathByID", { id: ctx.parentId });
+            const parentHPathRes = await post("/api/filetree/getHPathByID", { id: ctx.parentId });
+            if (parentPathRes && parentHPathRes) {
+                notebook = parentPathRes.notebook;
+                path = `${parentHPathRes}/${title}`;
+            }
+        } 
+        if (!notebook || !path) {
+            const hPathRes = await post("/api/filetree/getHPathByID", { id: core.containerId });
+            const pathRes = await post("/api/filetree/getPathByID", { id: core.containerId });
+            notebook = pathRes.notebook;
+            path = `${hPathRes}/${title}`;
+        }
+        console.log(`[Sync Debug] New Doc Path: ${path} in Notebook: ${notebook}`);
+
+        const newIdRes = await client.createDocWithMd({ notebook, path, markdown: "" });
+        const newId = newIdRes.data;
+        console.log(`[Sync Debug] Created Doc ID: ${newId}`);
+
+        if (newId) {
+            await client.setBlockAttrs({ id: core.containerId, attrs: { [ATTR_INDEX]: newId } });
+            
+            // Initial Icon Sync for new doc
+             if (core.currentIcon) {
+                const iconToSend = this.emojiToHex(core.currentIcon);
+                console.log(`[Sync Debug] Setting new doc icon: "${iconToSend}"`);
+                await client.setBlockAttrs({ id: newId, attrs: { icon: iconToSend } });
+            }
+
+            const newMd = await this.constructListItemMarkdown(core.containerId, containerAttrs[ATTR_OUTLINE], core.syncMd);
+            await client.updateBlock({ id: core.contentId, dataType: "markdown", data: newMd });
+            if(Object.keys(stylesToKeep).length > 0) await client.setBlockAttrs({ id: core.contentId, attrs: stylesToKeep });
+            return newId;
+        }
+        return null;
+    }
+
+    emojiToHex(icon: string) {
+         if (!icon) return "";
+         if (icon.includes(".") || icon.includes("/")) return icon; 
+         // If it contains non-ASCII characters, assume it's a unicode emoji needing conversion
+         if (/[^\u0000-\u007F]/.test(icon)) {
+             return Array.from(icon).map(c => c.codePointAt(0)?.toString(16)).join("-");
+         }
+         return icon;
+    }
+
+    async handlePullFromDoc(core: any, containerAttrs: any) {
+        console.log("[Sync Debug] PullFromDoc Start", core.contentId);
+        if (!containerAttrs[ATTR_INDEX]) return;
+        const docId = containerAttrs[ATTR_INDEX];
+        const docAttrsRes = await client.getBlockAttrs({ id: docId });
+        const docAttrs = docAttrsRes.data;
+        
+        if (!docAttrs.title) return;
+        const newTitle = docAttrs.title;
+        console.log("[Sync Debug] New Title from Doc:", newTitle);
+        
+        const newIconChar = this.resolveIcon(docAttrs.icon || DEFAULT_ICON);
+        console.log(`[Sync Debug] Pulling Icon. Raw: "${docAttrs.icon}", Resolved: "${newIconChar}"`);
+
+        const newIconLink = `[${newIconChar}](siyuan://blocks/${docId})`;
+
+        const currentAttrsRes = await client.getBlockAttrs({ id: core.contentId });
+        const stylesToPreserve = this.filterSystemAttrs(currentAttrsRes.data);
+
+        const ialRegex = /(?:^|\s)(\{:[^}]+\})\s*$/;
+        const match = core.markdown.match(ialRegex);
+        const originalIal = match ? match[1] : ""; 
+        let bodyMd = core.markdown.replace(ialRegex, "").trimEnd();
+        
+        let isSuccess = false;
+
+        if (core.hasSeparator) {
+            // ... existing logic ...
+            const iconRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)/;
+            if (iconRegex.test(bodyMd)) {
+                console.log("[Sync Debug] Replacing existing icon link.");
+                bodyMd = bodyMd.replace(iconRegex, newIconLink);
+            } else {
+                console.log("[Sync Debug] Prepending new icon link.");
+                bodyMd = newIconLink + " " + bodyMd.trimStart();
+            }
+
+            let contentMd = bodyMd;
+            const extractIconRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)\s*/;
+            contentMd = contentMd.replace(extractIconRegex, "");
+            const extractSepRegex = /^\s*(\[➖\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)|➖)\s*/;
+            contentMd = contentMd.replace(extractSepRegex, "");
+            contentMd = contentMd.trim();
+
+            const calculatedPureText = this.stripMarkdownSyntax(contentMd);
+            console.log("[Sync Debug] Content MD:", contentMd);
+            console.log("[Sync Debug] Calculated Pure Text:", calculatedPureText);
+            console.log("[Sync Debug] Check includes:", contentMd.includes(calculatedPureText));
+
+            if (calculatedPureText && contentMd.includes(calculatedPureText)) {
+                 if (calculatedPureText !== newTitle) {
+                    console.log(`[Sync Debug] Updating text: "${calculatedPureText}" -> "${newTitle}"`);
+                    bodyMd = bodyMd.replace(calculatedPureText, newTitle);
+                 }
+                 isSuccess = true;
+            } else {
+                 console.log("[Sync Debug] Continuity check failed. Complex format detected.");
+                 if (calculatedPureText !== newTitle) {
+                     this.errors.push(core.containerId);
+                 }
+            }
+        }
+
+        let finalMd = "";
+        if (core.hasSeparator) {
+             finalMd = bodyMd + (originalIal ? " " + originalIal : "");
+        } else {
+            console.log("[Sync Debug] Reconstructing list item from scratch.");
+            let reconstructed = await this.constructListItemMarkdown(
+                core.containerId, 
+                containerAttrs[ATTR_OUTLINE], 
+                newTitle
+            );
+            finalMd = reconstructed + (originalIal ? " " + originalIal : "");
+        }
+
+        console.log(`[Sync Debug] Final MD for Pull: ${finalMd}`);
+        await client.updateBlock({ id: core.contentId, dataType: "markdown", data: finalMd });
+
+        if (Object.keys(stylesToPreserve).length > 0) {
+            await client.setBlockAttrs({ id: core.contentId, attrs: stylesToPreserve });
         }
     }
-    return markdown;
+
+    async handlePullFromBottom(core: any, containerAttrs: any) {
+        if (!containerAttrs[ATTR_OUTLINE]) return;
+        const outlineId = containerAttrs[ATTR_OUTLINE];
+        const rowsRes = await client.sql({ stmt: `SELECT markdown FROM blocks WHERE id = '${outlineId}' LIMIT 1` });
+        if (!rowsRes.data[0]) return;
+
+        const newContentMd = this.cleanHeaderContent(rowsRes.data[0].markdown);
+        
+        const sourceAttrsRes = await client.getBlockAttrs({ id: outlineId });
+        const validStyles = this.filterSystemAttrs(sourceAttrsRes.data);
+
+        const ialRegex = /(?:^|\s)(\{:[^}]+\})\s*$/;
+        const match = core.markdown.match(ialRegex);
+        const originalIal = match ? match[1] : ""; 
+
+        // Always reconstruct for Rich Text sync, bypassing complex format checks
+        let baseMd = await this.constructListItemMarkdown(
+            core.containerId, 
+            outlineId, 
+            newContentMd
+        );
+        let finalMd = baseMd + (originalIal ? " " + originalIal : "");
+
+        await client.updateBlock({ id: core.contentId, dataType: "markdown", data: finalMd });
+        
+        if (Object.keys(validStyles).length > 0) {
+            await client.setBlockAttrs({ id: core.contentId, attrs: validStyles });
+        }
+    }
+
+    stripMarkdownSyntax(md: string) {
+        if (!md) return "";
+        let plain = md;
+        plain = plain.replace(/(\*\*|__|~~|==)/g, ""); 
+        plain = plain.replace(/(\*|_)/g, "");
+        plain = plain.replace(/<[^>]+>/g, "");
+        plain = plain.replace(/\[([^\]]*)\]\([^\)]+\)/g, "");
+        plain = plain.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "");
+        plain = plain.replace(/`([^`]+)`/g, "");
+        plain = plain.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+        // console.log(`[Sync] Strip MD: "${md}" -> "${plain.trim()}"`);
+        return plain.trim();
+    }
+
+    async constructListItemMarkdown(containerId: string, headingId: string, syncText: string) {
+        const parts = [];
+        const containerAttrsRes = await client.getBlockAttrs({ id: containerId });
+        const containerAttrs = containerAttrsRes.data;
+        const docId = containerAttrs[ATTR_INDEX];
+        
+        if (docId) {
+            let icon = DEFAULT_ICON;
+            try {
+                 const docInfoRes = await client.getBlockAttrs({ id: docId });
+                 const rawIcon = docInfoRes.data.icon || DEFAULT_ICON;
+                 icon = this.resolveIcon(rawIcon);
+                 console.log(`[Sync Debug] constructListItemMarkdown - DocId: ${docId}, Raw Icon: "${rawIcon}", Resolved Icon: "${icon}"`);
+            } catch(e) {
+                console.error("[Sync Debug] Failed to get doc icon:", e);
+            }
+            parts.push(`[${icon}](siyuan://blocks/${docId})`);
+        }
+
+        if (headingId) {
+            parts.push(`[${SEP_CHAR}](siyuan://blocks/${headingId})`);
+        } else {
+            parts.push(SEP_CHAR);
+        }
+        parts.push(syncText.trim());
+        return parts.join(" ");
+    }
+
+    resolveIcon(iconStr: string) {
+        if (!iconStr) return DEFAULT_ICON;
+        if (iconStr.includes(".") || iconStr.includes("/")) return DEFAULT_ICON;
+        
+        // Handle hex codes (including sequences like 1f469-200d-1f692)
+        const hexRegex = /^[0-9a-fA-F]+(-[0-9a-fA-F]+)*$/;
+        if (hexRegex.test(iconStr)) {
+            try { 
+                return String.fromCodePoint(...iconStr.split('-').map(s => parseInt(s, 16))); 
+            } catch (e) { 
+                console.warn("[Sync Debug] Failed to resolve icon hex:", iconStr, e);
+                return iconStr; 
+            }
+        }
+        return iconStr;
+    }
+
+    async getCoreContentInfo(listItemId: string) {
+        const selfRes = await client.sql({ stmt: `SELECT type FROM blocks WHERE id = '${listItemId}' LIMIT 1` });
+        if (!selfRes.data[0] || selfRes.data[0].type !== "i") return null;
+
+        const childrenRes = await client.sql({
+            stmt: `SELECT id, type, markdown, content FROM blocks WHERE parent_id = '${listItemId}' AND type = 'p' ORDER BY sort ASC`
+        });
+        const children = childrenRes.data;
+        if (!children || children.length === 0) return null;
+
+        const sepRegex = /(\[➖\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)|➖)/;
+        const iconRegex = /\s*\[.*?\]\(siyuan:\/\/blocks\/.*?\)\s*/; 
+
+        let targetBlock = children.find((child: any) => {
+            const md = child.markdown || "";
+            return sepRegex.test(md) || iconRegex.test(md);
+        });
+        if (!targetBlock) targetBlock = children[0];
+
+        const contentId = targetBlock.id;
+        const md = targetBlock.markdown || "";
+        const content = targetBlock.content || "";
+        
+        let tempMd = md.replace(/\s*\{:[^}]+\}\s*$/, "");
+        let hasSeparator = false;
+
+        // Try to extract current icon from the beginning of MD
+        // Matches standard emoji, :emoji:, or [icon](...)
+        let currentIcon = null;
+        const explicitIconRegex = /^(?:([\uD800-\uDBFF][\uDC00-\uDFFF])|(:[^:]+:)|\[(.*?)\]\(siyuan:\/\/blocks\/.*?\))\s*/;
+        const iconMatch = tempMd.match(explicitIconRegex);
+        console.log(`[Sync Debug] getCoreContentInfo - tempMd: "${tempMd}"`);
+        console.log(`[Sync Debug] getCoreContentInfo - iconMatch:`, iconMatch);
+        
+        if (iconMatch) {
+            // Group 1: Unicode Emoji, Group 2: :emoji:, Group 3: [icon](link) -> icon
+            currentIcon = iconMatch[1] || iconMatch[2] || iconMatch[3];
+            console.log(`[Sync Debug] getCoreContentInfo - Extracted currentIcon: "${currentIcon}"`);
+        }
+
+        const docLinkRegex = /^\s*\[.*?\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)\s*/;
+        if (docLinkRegex.test(tempMd)) {
+            tempMd = tempMd.replace(docLinkRegex, "");
+        }
+
+        const sepLinkRegex = /^\s*(\[➖\]\(siyuan:\/\/blocks\/[a-zA-Z0-9-]+\)|➖)\s*/;
+        if (sepLinkRegex.test(tempMd)) {
+            hasSeparator = true;
+            tempMd = tempMd.replace(sepLinkRegex, "");
+        }
+
+        let syncMd = tempMd.trim();
+        let plain = syncMd;
+        plain = plain.replace(/(\*\*|__|\*|_|~~)/g, ""); 
+        plain = plain.replace(/\[([^\]]*)\]\([^\)]+\)/g, "");
+        plain = plain.replace(/!\[([^\]]*)\]\([^\)]+\)/g, "");
+        plain = plain.replace(/`([^`]+)`/g, "");
+        plain = plain.replace(/<[^>]+>/g, "");
+        plain = plain.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+        return {
+            containerId: listItemId,
+            contentId: contentId,
+            hasSeparator,
+            syncText: plain.trim(),
+            syncMd,
+            markdown: md, 
+            content: content,
+            currentIcon 
+        };
+    }
+
+    cleanHeaderContent(md: string) {
+        if (!md) return "";
+        let content = md.replace(/^#+\s+/, "").trim();
+        content = content.replace(/\s*\{:[^}]+\}\s*$/, "");
+        return content.trim();
+    }
+
+    filterSystemAttrs(attrs: any) {
+        const validAttrs: any = {};
+        const ignoreList = ["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "markdown", "content", "name", "alias", "memo", ATTR_INDEX, ATTR_OUTLINE];
+        for (const [key, val] of Object.entries(attrs)) {
+            if (!ignoreList.includes(key)) validAttrs[key] = val;
+        }
+        return validAttrs;
+    }
 }

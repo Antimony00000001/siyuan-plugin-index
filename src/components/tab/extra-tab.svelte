@@ -14,9 +14,9 @@ class={tabbarfocus === "extra"
     : "config__tab-container fn__none"}
 >
 <SettingItem
-    type="switch"
-    content={i18n.settingsTab.items.docBuilder}
-    settingKey="docBuilder"
-    settingValue={settingsStrings.docBuilder}
+    type="hint"
+    content={i18n.settingsTab.items.builder}
+    settingKey="builder"
+    settingValue={settingsStrings.builder}
 />
 </div>
