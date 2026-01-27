@@ -546,14 +546,15 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                     data += "1. ";
                 }
 
-                data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
+                let iconStr = getProcessedDocIcon(icon, subFileCount != 0);
 
                 //置入数据
                 let linkType = settings.get("linkType") == "ref" ? true : false;
                 if (linkType) {
-                    data += `[${name}](siyuan://blocks/${id})\n`;
+                    data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
                 } else {
-                    data += `((${id} '${name}'))\n`;
+                    let safeIconStr = iconStr.replace(/'/g, "&apos;");
+                    data += `((${id} '${safeIconStr}')) ${name}\n`;
                 }
                 
                 let outlineData = await requestGetDocOutline(id);
@@ -621,14 +622,15 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             //     data += '{: fold="1"}';
             // }
 
-            data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
+            let iconStr = getProcessedDocIcon(icon, subFileCount != 0);
 
             //置入数据
             let linkType = settings.get("linkType") == "ref" ? true : false;
             if (linkType) {
-                data += `[${name}](siyuan://blocks/${id})\n`;
+                data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
             } else {
-                data += `((${id} '${name}'))\n`;
+                let safeIconStr = iconStr.replace(/'/g, "&apos;");
+                data += `((${id} '${safeIconStr}')) ${name}\n`;
             }
             // console.log(data);
             let item = new IndexQueueNode(tab, data);
