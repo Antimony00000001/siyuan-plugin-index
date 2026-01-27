@@ -546,9 +546,7 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                     data += "1. ";
                 }
 
-                if (settings.get("icon")) {
-                    data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
-                }
+                data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
 
                 //置入数据
                 let linkType = settings.get("linkType") == "ref" ? true : false;
@@ -623,9 +621,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             //     data += '{: fold="1"}';
             // }
 
-            if (settings.get("icon")) {
-                data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
-            }
+            data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
 
             //置入数据
             let linkType = settings.get("linkType") == "ref" ? true : false;

@@ -89,7 +89,6 @@ class Settings{
 
     loadSettings(data: any){
         const def = new SettingsProperty();
-        this.set("icon", data.icon ?? def.icon);
         this.set("depth", data.depth ?? def.depth);
         this.set("listType", data.listType ?? def.listType);
         this.set("linkType", data.linkType ?? def.linkType);
@@ -110,7 +109,6 @@ class Settings{
 export const settings: Settings = new Settings();
 
 export class SettingsProperty {
-    icon: boolean;
     depth: number;
     listType: string;
     linkType: string;
@@ -123,7 +121,6 @@ export class SettingsProperty {
     listTypeOutline: string;
 
     constructor(){
-        this.icon = true;
         this.depth = 0;
         this.listType = "unordered";
         this.linkType = "ref";
@@ -137,7 +134,6 @@ export class SettingsProperty {
     }
 
     getAll(){
-        this.icon = settings.get("icon");
         this.depth = settings.get("depth");
         this.listType = settings.get("listType");
         this.linkType = settings.get("linkType");

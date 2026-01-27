@@ -23,7 +23,6 @@
 
     async function updateSettings() {
         await settings.load();
-        settingsStrings.icon = settings.get("icon");
         settingsStrings.depth = settings.get("depth");
         settingsStrings.listType = settings.get("listType");
         settingsStrings.linkType = settings.get("linkType");
