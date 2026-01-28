@@ -1,5 +1,5 @@
 // import { Dialog } from 'siyuan';
-import { client, escapeHtml, i18n, isMobile, plugin } from '../utils';
+import { client, escapeHtml, i18n, isMobile, plugin, sleep } from '../utils';
 import { CONFIG, settings } from '../settings';
 import { IndexQueue, IndexQueueNode } from '../indexnode';
 import { onCreatenbiButton } from './createnotebookindex';
@@ -210,7 +210,7 @@ export async function insertAuto(notebookId: string, path: string, parentId: str
         await createIndex(notebookId, path, indexQueue);
         data = queuePopAll(indexQueue, data);
         if (data != '') {
-            await insertDataAfter(rs.data[0].id, data, "index");
+            await insertData(parentId, data, "index");
         } else {
             client.pushErrMsg({
                 msg: i18n.errorMsg_miss,
@@ -276,7 +276,7 @@ export async function insertOutlineAuto(parentId: string) {
         let extraData = await getBlocksData(ids);
         data = insertOutline(data, outlineData, 0, 0, extraData, existingAnchors);
         if (data != '') {
-            await insertDataAfter(rs.data[0].id, data, "outline");
+            await insertData(parentId, data, "outline");
         } else {
             client.pushErrMsg({
                 msg: i18n.errorMsg_miss,
@@ -683,51 +683,85 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
 
         if (rs.data[0]?.id == undefined) {
             // No existing index/outline found
+            let result;
             if (targetBlockId) {
-                // console.log("[IndexPlugin] Updating target block (Slash command):", targetBlockId);
                 // Slash command: Replace the slash command block with new content
-                let result = await client.updateBlock({
+                result = await client.updateBlock({
                     data: data,
                     dataType: 'markdown',
                     id: targetBlockId
                 });
-                await client.setBlockAttrs({
-                    attrs: attrs,
-                    id: result.data[0].doOperations[0].id
-                });
-                client.pushMsg({
-                    msg: i18n.msg_success,
-                    timeout: 3000
-                });
             } else {
-                // console.log("[IndexPlugin] Inserting new block (Button)");
                 // Topbar button: Append new block
                 // Replace insertBlock with appendBlock to potentially fix "tree not found"
-                let result = await client.appendBlock({
+                result = await client.appendBlock({
                     data: data,
                     dataType: 'markdown',
                     parentID: id
                 });
-                await client.setBlockAttrs({
-                    attrs: attrs,
-                    id: result.data[0].doOperations[0].id
-                });
-                client.pushMsg({
-                    msg: i18n.msg_success,
-                    timeout: 3000
-                });
             }
+
+            let opId = result.data[0].doOperations[0].id;
+            let attrTargetId = opId;
+
+            // If Outline (Blockquote), bind attribute to inner List
+            if (type == "outline") {
+                for (let i = 0; i < 5; i++) {
+                    await sleep(300);
+                    let childRs = await client.sql({ stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' LIMIT 1` });
+                    if (childRs.data[0]) {
+                        attrTargetId = childRs.data[0].id;
+                        break;
+                    }
+                }
+            }
+
+            await client.setBlockAttrs({
+                attrs: attrs,
+                id: attrTargetId
+            });
+            client.pushMsg({
+                msg: i18n.msg_success,
+                timeout: 3000
+            });
+
         } else {
-            // console.log("[IndexPlugin] Updating existing block:", rs.data[0].id);
             // Existing index/outline found
+            let currentId = rs.data[0].id;
+            let updateTargetId = currentId;
+
+            // If updating Outline, and we found the List (via attr), we need to update its parent Blockquote
+            if (type == "outline" && rs.data[0].type === 'l') {
+                 let parentRs = await client.sql({ stmt: `SELECT id, type FROM blocks WHERE id = '${rs.data[0].parent_id}'` });
+                 if (parentRs.data[0] && parentRs.data[0].type === 'b') {
+                     updateTargetId = parentRs.data[0].id;
+                 }
+            }
+
             let result = await client.updateBlock({
                 data: data,
                 dataType: 'markdown',
-                id: rs.data[0].id
+                id: updateTargetId
             });
+
+            let opId = result.data[0].doOperations[0].id;
+            let attrTargetId = opId;
+
+            // If Outline, re-bind to new inner List
+            if (type == "outline") {
+                for (let i = 0; i < 5; i++) {
+                    await sleep(300);
+                    let childRs = await client.sql({ stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' LIMIT 1` });
+                    if (childRs.data[0]) {
+                        attrTargetId = childRs.data[0].id;
+                        break;
+                    }
+                }
+            }
+
             await client.setBlockAttrs({
                 attrs: attrs,
-                id: result.data[0].doOperations[0].id
+                id: attrTargetId
             });
             
             // If invoked via slash command, delete the slash command block since we updated the existing one

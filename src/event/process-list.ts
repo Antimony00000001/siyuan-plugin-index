@@ -46,6 +46,16 @@ export function buildDoc({ detail }: any) {
 }
 
 async function syncManager(sourceBlockId: string, sourceType: string, actionType: string) {
+    // Check for Index/Outline attributes to prevent conflict
+    const attrsRes = await client.getBlockAttrs({ id: sourceBlockId });
+    if (attrsRes.data && (attrsRes.data["custom-index-create"] || attrsRes.data["custom-outline-create"])) {
+        client.pushErrMsg({
+            msg: "当前不支持在大纲/目录的基础上执行文档构建器",
+            timeout: 3000
+        });
+        return;
+    }
+
     try {
       const processor = new ListProcessor();
       await processor.processRecursive(sourceBlockId, sourceType, actionType);
