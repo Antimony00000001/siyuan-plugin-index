@@ -466,37 +466,33 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
 export function getProcessedDocIcon(icon: string, hasChild: boolean) {
     if (icon == '' || icon == undefined) {
         return hasChild ? "📑" : "📄";
-    } else if (icon.indexOf(".") != -1) {
-        if (icon.indexOf("http://") != -1 || icon.indexOf("https://") != -1) {
-            return hasChild ? "📑" : "📄";
-        } else {
-            // 移除扩展名
-            let removeFileFormat = icon.substring(0, icon.lastIndexOf("."));
-            return `:${removeFileFormat}:`;
-        }
-    } else if (icon.includes("api/icon/getDynamicIcon")) {
-        return `![](${icon})`;
-    } else {
-        // If it's not a hex string, and not a URL, and not a file extension, assume it's a direct emoji.
-        // This is a heuristic, as a robust emoji check is complex.
-        if (!/^[0-9a-fA-F-]+$/.test(icon) && !icon.includes("http://") && !icon.includes("https://") && icon.length <= 4) { 
-             console.log(`[Gemini-20251024-1] getProcessedDocIcon: Assuming direct emoji: '${icon}'`);
-             return icon;
-        }
-
-        let result = "";
-        for (const element of icon.split("-")) {
-            const codePoint = parseInt(element, 16);
-            if (isNaN(codePoint)) {
-                // If any part is not a valid hex, return default icons
-                console.log(`[Gemini-20251024-1] getProcessedDocIcon: parseInt failed for element '${element}', returning default.`);
-                return hasChild ? "📑" : "📄";
-            }
-            result += String.fromCodePoint(codePoint);
-        }
-        console.log(`[Gemini-20251024-1] getProcessedDocIcon: For icon '${icon}', final result: '${result}'`);
-        return result;
     }
+    
+    // 1. Unicode Hex Sequence (e.g. "1f600" or "1f468-200d")
+    if (/^[0-9a-fA-F-]+$/.test(icon)) {
+        let result = "";
+        try {
+            for (const element of icon.split("-")) {
+                const codePoint = parseInt(element, 16);
+                if (isNaN(codePoint)) {
+                    return hasChild ? "📑" : "📄";
+                }
+                result += String.fromCodePoint(codePoint);
+            }
+            return result;
+        } catch (e) {
+            return hasChild ? "📑" : "📄";
+        }
+    }
+    
+    // 2. Direct Emoji / Short text (heuristic)
+    // Avoids paths like "api/icon/..." or "image.png"
+    if (icon.length <= 4 && !icon.includes("/")) {
+        return icon;
+    }
+
+    // 3. Complex/Dynamic/File Icon -> Default
+    return hasChild ? "📑" : "📄";
 }
 
 //创建目录
@@ -645,8 +641,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
 
 //插入数据
 export async function insertDataSimple(id: string, data: string) {
-
-    await client.insertBlock({
+    await client.prependBlock({
         data: data,
         dataType: 'markdown',
         parentID: id
@@ -692,9 +687,8 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
                     id: targetBlockId
                 });
             } else {
-                // Topbar button: Append new block
-                // Replace insertBlock with appendBlock to potentially fix "tree not found"
-                result = await client.appendBlock({
+                // Topbar button: Insert at top
+                result = await client.prependBlock({
                     data: data,
                     dataType: 'markdown',
                     parentID: id
