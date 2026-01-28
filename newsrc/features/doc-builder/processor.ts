@@ -267,9 +267,9 @@ export class IBlockProcessor {
 
     filterSystemAttrs(attrs: any) {
         const validAttrs: any = {};
-        const ignoreList = ["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "markdown", "content", "name", "alias", "memo", ATTR_INDEX, ATTR_OUTLINE];
+        const whitelist = new Set(["style", "class"]);
         for (const [key, val] of Object.entries(attrs)) {
-            if (!ignoreList.includes(key)) validAttrs[key] = val;
+            if (whitelist.has(key)) validAttrs[key] = val;
         }
         return validAttrs;
     }

@@ -2,14 +2,14 @@ import { settings } from "../../core/settings";
 
 function filterIAL(ialStr: string) {
     if (!ialStr) return "";
-    const ignoreAttrs = new Set(["id", "updated", "created", "hash", "box", "path", "hpath", "parent_id", "root_id", "type", "subtype", "sort", "custom-index-subdoc-id", "custom-index-heading-id", "title-img", "icon", "class", "refcount"]);
+    const whitelist = new Set(["style", "class"]);
     
     const parts = ialStr.match(/(\S+?)=\"([\s\S]*?)\"/g);
     if (!parts) return "";
     
     const filtered = parts.filter(part => {
         const key = part.match(/^(\S+?)=/)?.[1];
-        return key && !ignoreAttrs.has(key);
+        return key && whitelist.has(key);
     });
     
     return filtered.join(" ");
