@@ -1,93 +1,83 @@
-# 🔄 底部标题 -> 列表项同步：格式零丢失机制揭秘
+# 🔄 IndexPlugin 自动更新机制深度解析
 
-在 `ListBlockPlugin` 中，从底部标题（Heading）拉取内容回列表项（List Item）时，为了确保**颜色、背景**以及**加粗、下划线、删除线等行内格式**完全不丢失，采用了以下多重保护策略：
+通过对整个项目代码的分析，特别是 `src/index.ts`, `src/event/protyleevent.ts` 和 `src/creater/createIndex.ts`，现总结两种自动更新机制的差异及其根本原因。
 
-## 1. 🛡️ 属性（样式）级保护
+## 1. 触发机制 (Trigger)
 
-同步不仅仅是同步文本，还包括块属性（Block Attributes，即颜色、背景色等）。
+这两种自动更新都是由同一个事件触发的：
 
-*   **提取源属性**：代码首先获取底部标题的所有属性 (`sourceAttrs`)。
-*   **过滤系统属性**：使用 `filterSystemAttrs` 剔除系统自动生成的属性（如 ID, updated, sort 等），只保留用户定义的样式属性（如 `style`, `custom-*`）。
-*   **强制应用**：在更新文本后，会显式调用 `setBlockAttrs` 将这些保留下来的样式属性重新应用到列表项上。这确保了如果标题变色了，列表项也会跟着变色。
+*   **事件**: `loaded-protyle-static` (文档被加载/打开时触发)。
+*   **入口**: `src/index.ts` 注册了监听器：
+    ```typescript
+    this.eventBus.on("loaded-protyle-static", updateIndex);
+    ```
+*   **分发**: `src/event/protyleevent.ts` 中的 `updateIndex` 函数接收事件，并同时调用了两个更新函数：
+    ```typescript
+    insertAuto(notebookId,path,parentId);      // 更新目录
+    insertOutlineAuto(parentId);               // 更新大纲
+    ```
 
-### 核心代码片段
+这意味着每次你打开或刷新文档时，只要满足条件（如存在对应的 `custom-*-create` 属性且开启了自动更新），两者都会尝试运行。
 
-```javascript
-// 获取源标题属性
-const sourceAttrs = await this.plugin.getBlockAttrs(outlineId);
-// 过滤掉系统属性，只保留样式
-const validStyles = this.filterSystemAttrs(sourceAttrs);
+## 2. 机制对比
 
-// ... (文本更新逻辑) ...
+### A. 目录 (Index) 自动更新 - ⚠️ “覆盖型”更新
 
-// 最后强制应用样式
-if (Object.keys(validStyles).length > 0) {
-     await this.plugin.setBlockAttrs(core.contentId, validStyles);
-}
-```
+这是导致你自定义 Icon/Separator 被覆盖的机制。
 
-## 2. 🧬 文本级保护（智能替换算法）
-
-这是保留行内格式（Inline Formatting，如 `**bold**`, `<u>underline</u>`）的核心机制。
-
-代码**不会**简单粗暴地用标题的纯文本覆盖整个列表项，而是采用了一种“**外科手术式**”的替换策略：
-
-1.  **解构当前内容**：
-    *   先把列表项的 Markdown 拆解，分离出 **Icon 链接**、**分隔符链接** 和 **剩余的内容文本**。
-    *   把剩余内容文本中的 Markdown 符号剥离（stripMarkdownSyntax），计算出旧的“纯文本”。
-
-2.  **连续性检查 (Continuity Check)**：
-    *   代码会检查旧的“纯文本”是否还存在于当前的 Markdown 源码中。
-    *   **关键点**：如果存在，代码执行 `bodyMd.replace(oldPureText, newContentMd)`。
-    *   **效果**：这意味着只替换了文字部分，而包裹在文字外面的 Markdown 符号（例如 `**...**` 或 `<u>...</u>`）会被原封不动地保留下来。
-
-    > **例子**：
-    > *   列表项原貌：`[📄] [➖] **<u>旧标题</u>**`
-    > *   底部标题新内容：`新标题`
-    > *   **操作**：识别出旧纯文本为 `旧标题`，在原 Markdown 中将其替换为 `新标题`。
-    > *   **结果**：`[📄] [➖] **<u>新标题</u>**` （加粗和下划线完美保留）
-
-### 核心代码片段
-
-```javascript
-// A. 剥离 Icon 和 分隔符，获取旧的纯文本
-let tempForExtract = bodyMd;
-tempForExtract = tempForExtract.replace(extractIconRegex, "").replace(extractSepRegex, "");
-let oldPureText = tempForExtract.trim(); 
-
-// B. 连续性检查：确认旧文本是否还在 bodyMd 中（未被破坏）
-if (oldPureText && bodyMd.includes(oldPureText)) {
-    if (oldPureText !== newContentMd) { 
-        // C. 手术式替换：只替换文字，保留周围的 Markdown 符号 (**...**)
-        bodyMd = bodyMd.replace(oldPureText, newContentMd);
-        
-        const finalMd = bodyMd + (originalIal ? " " + originalIal : "");
-        await this.plugin.updateBlockText(core.contentId, finalMd);
-    }
-    isHandled = true; // 标记处理成功，跳过兜底逻辑
-}
-```
-
-## 3. ⛑️ 兜底机制 (Fallback)
-
-如果列表项的结构过于复杂，或者被用户修改得面目全非，导致无法精准定位“旧文本”（即连续性检查失败）：
-
-*   代码会回退到 `constructListItemMarkdown` 方法。
-*   这虽然会重构标准格式（`Icon + Separator + 新文本`），可能会丢失部分复杂的行内嵌套格式，但它依然会：
-    *   保留 Icon 和 分隔符链接。
-    *   重新应用第一步中提取的块属性（颜色/背景）。
-    *   保留原本的 IAL。
-
-```javascript
-if (!isHandled) {
-    // 重新构建标准 Markdown 结构
-    let baseMd = await this.constructListItemMarkdown(
-        core.containerId, 
-        outlineId, 
-        newContentMd
-    );
+*   **函数**: `insertAuto` -> `createIndex`
+*   **文件**: `src/creater/createIndex.ts`
+*   **核心逻辑**:
+    它在重新生成目录列表项时，**强制**重新获取目标文档当前的 Icon，并将其作为块引用的锚文本。
+    ```typescript
+    // createIndex 函数中
+    let iconStr = getProcessedDocIcon(icon, subFileCount != 0); // 获取当前文档图标
     // ...
-}
-```
+    // 直接写入：((ID '当前图标')) 文档标题
+    data += `((${id} '${safeIconStr}')) ${name}\n`;
+    ```
+*   **后果**:
+    无论你之前是否手动修改过引用的锚文本（例如改成自定义的 Emoji 或符号），一旦自动更新触发，它都会被文档原本的图标无情覆盖。
 
-通过这种 **“属性同步 + 智能文本替换 + 兜底重构”** 的三层架构，插件实现了在同步内容的同时，最大程度地“冻结”和保护用户的格式信息。
+### B. 大纲 (Outline) 自动更新 - ✅ “理想型”更新
+
+这是你觉得好用的机制，格式同步且锚文本稳定。
+
+*   **函数**: `insertOutlineAuto` -> `insertOutline`
+*   **文件**: `src/creater/createIndex.ts`
+*   **核心逻辑**:
+    它在生成列表项时，使用了**静态**的锚文本（默认为 `➖`），并且尝试保留目标块的 Markdown 格式。
+    ```typescript
+    // insertOutline 函数中
+    let anchorText = "➖"; // 硬编码的静态符号
+    
+    // ...
+    // 写入：((ID '静态符号')) 标题文本
+    data += `((${id} '${anchorText}')) ${name}${ialStr}\n`;
+    ```
+*   **优势**:
+    1.  **锚文本与内容分离**: 链接部分 `((id '➖'))` 仅仅充当跳转按钮，不承载标题内容。
+    2.  **稳定性**: 只要代码不改，锚文本永远是 `➖`，不会因为目标文档图标变了或者标题变了而重置锚文本。
+    3.  **格式保留**: 它通过 `extractHeadingContent` 和 `filterIAL` 尝试把目标标题的格式（粗体、颜色等）带过来。
+
+## 3. 改进建议
+
+为了让“目录 (Index)”的更新也能达到“大纲”的效果，你需要修改 `createIndex` 函数的逻辑，使其：
+1.  **放弃使用文档 Icon 做锚文本**（或者提供选项）。
+2.  **采用静态字符**（如 `📄`, `📑` 或自定义字符）作为锚文本。
+3.  **分离结构**：改为 `((ID '静态字符')) 标题` 的形式。
+
+这样，自动更新时只会刷新后面的“标题”部分，而不会动前面的“静态字符”锚文本（也就不会覆盖你自定义的分隔符了，如果你把它看作分隔符的话）。
+
+---
+
+# 🚫 排除干扰：Smart List Sync (process-*.ts)
+
+在代码中还存在另一套同步逻辑，位于 `src/event/process-iblock.ts` 和 `src/event/process-list.ts`。
+
+*   **功能**: 提供块菜单中的手动操作（“构建子文档”、“从子文档拉取”等）。
+*   **状态**: **与上述自动更新 bug 无关**。
+*   **区别**:
+    *   `createIndex.ts` (Auto Update): 负责**整棵树**的生成和全量刷新。
+    *   `process-iblock.ts` (Smart List): 负责**单个条目**的精细化双向同步。
+*   **注意**: 即使是这套手动逻辑 (`process-iblock.ts`)，其 `handlePullFromDoc` 方法在拉取时也会默认更新 Icon。但它具备更高级的“格式保留”算法（Regex 替换），这一点与 `insertOutline` 类似，比 `createIndex` 的暴力覆盖要高级。

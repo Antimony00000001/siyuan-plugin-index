@@ -35,7 +35,6 @@ export async function insert(targetBlockId?: string) {
     indexQueue = new IndexQueue();
     await createIndex(block.data.box, block.data.path, indexQueue);
     data = queuePopAll(indexQueue, data);
-    console.log(data);
     if (data != '') {
         await insertData(parentId, data, "index", targetBlockId);
     } else {
@@ -54,8 +53,6 @@ export async function insert(targetBlockId?: string) {
 export async function insertButton() {
     //载入配置
     await settings.load();
-
-//    settings.set("autoUpdate", false);
 
     //寻找当前编辑的文档的id
     let parentId = getDocid();
@@ -77,7 +74,6 @@ export async function insertButton() {
     indexQueue = new IndexQueue();
     await createIndexandOutline(block.data.box, block.data.path, indexQueue);
     data = queuePopAll(indexQueue, data);
-    console.log(data);
     if (data != '') {
         await insertDataSimple(parentId, data);
     } else {
@@ -116,7 +112,7 @@ export async function insertDocButton(targetBlockId?: string) {
     // console.log(outlineData);
     let ids = collectOutlineIds(outlineData);
     let extraData = await getBlocksData(ids);
-    data = insertOutline(data, outlineData, 0, 0, extraData);
+    data = insertOutline(data, outlineData, 0, 0, extraData, new Map<string, string>());
     if (data != '') {
         await insertData(parentId, data, "outline", targetBlockId);
     } else {
@@ -213,8 +209,6 @@ export async function insertAuto(notebookId: string, path: string, parentId: str
         indexQueue = new IndexQueue();
         await createIndex(notebookId, path, indexQueue);
         data = queuePopAll(indexQueue, data);
-        // console.log(plugin.data);
-        // console.log("data=" + data);
         if (data != '') {
             await insertDataAfter(rs.data[0].id, data, "index");
         } else {
@@ -249,21 +243,30 @@ export async function insertOutlineAuto(parentId: string) {
         let ial = await client.getBlockAttrs({
             id: rs.data[0].id
         });
+
+        // Extract existing anchors to preserve custom separators
+        let existingAnchors = new Map<string, string>();
+        if (rs.data[0].markdown) {
+            existingAnchors = extractAnchors(rs.data[0].markdown);
+            // Filter out invalid separators
+            for (const [id, anchor] of existingAnchors) {
+                if (!isValidSeparator(anchor)) {
+                    existingAnchors.delete(id);
+                }
+            }
+        }
+
         //载入配置
         let str = ial.data["custom-outline-create"];
-        console.log("[IndexPlugin] AutoUpdate - Raw IAL String:", str);
         
         try {
             let parsedSettings = JSON.parse(str);
-            console.log("[IndexPlugin] AutoUpdate - Parsed Settings:", parsedSettings);
             settings.loadSettingsforOutline(parsedSettings);
-            console.log("[IndexPlugin] AutoUpdate - Applied 'outlineType':", settings.get("outlineType"));
         } catch (e) {
             console.error("[IndexPlugin] AutoUpdate - Failed to parse settings:", e);
         }
 
         if (!settings.get("outlineAutoUpdate")) {
-            console.log("[IndexPlugin] AutoUpdate - Aborted: outlineAutoUpdate is false");
             return;
         }
         //插入目录
@@ -271,9 +274,7 @@ export async function insertOutlineAuto(parentId: string) {
         let outlineData = await requestGetDocOutline(parentId);
         let ids = collectOutlineIds(outlineData);
         let extraData = await getBlocksData(ids);
-        data = insertOutline(data, outlineData, 0, 0, extraData);
-        // console.log(plugin.data);
-        // console.log("data=" + data);
+        data = insertOutline(data, outlineData, 0, 0, extraData, existingAnchors);
         if (data != '') {
             await insertDataAfter(rs.data[0].id, data, "outline");
         } else {
@@ -375,7 +376,7 @@ function cleanAndEscape(content: string, forRef: boolean) {
     }
 }
 
-function insertOutline(data: string, outlineData: any[], tab: number, stab: number, extraData?: Record<string, { ial: string, markdown: string }>) {
+function insertOutline(data: string, outlineData: any[], tab: number, stab: number, extraData?: Record<string, { ial: string, markdown: string }>, existingAnchors?: Map<string, string>) {
 
     tab++;
 
@@ -396,9 +397,6 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
                 name = outline.content;
             }
         }
-
-        // Add debug log
-        console.log("insertOutline debug:", { name, id, depth: outline.depth });
 
         let indent = "";
         // let icon = doc.icon;
@@ -436,7 +434,7 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
             data += `${name}((${id} '*'))${ialStr}\n`;
         } else {
             outlineType = settings.get("outlineType") == "ref" ? true : false;
-            let anchorText = "➖";
+            let anchorText = existingAnchors?.get(id) || "➖";
             if (outlineType) {
                 // Link mode: [name](siyuan://blocks/id)
                 // Replicate ListBlockPlugin: [Anchor](Link) Text
@@ -444,16 +442,17 @@ function insertOutline(data: string, outlineData: any[], tab: number, stab: numb
             } else {
                 // Block Ref mode: ((id 'name'))
                 // Replicate ListBlockPlugin: ((Ref)) Text
-                data += `((${id} '${anchorText}')) ${name}${ialStr}\n`;
+                let safeAnchorText = anchorText.replace(/"/g, "&quot;");
+                data += `((${id} "${safeAnchorText}")) ${name}${ialStr}\n`;
             }
         }
         
         //`((id "锚文本"))`
         if (subOutlineCount > 0) {//获取下一层级子文档
             if (outline.depth == 0) {
-                data = insertOutline(data, outline.blocks, tab, stab, extraData);
+                data = insertOutline(data, outline.blocks, tab, stab, extraData, existingAnchors);
             } else {
-                data = insertOutline(data, outline.children, tab, stab, extraData);
+                data = insertOutline(data, outline.children, tab, stab, extraData, existingAnchors);
             }
         }
 
@@ -553,8 +552,8 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                 if (linkType) {
                     data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
                 } else {
-                    let safeIconStr = iconStr.replace(/'/g, "&apos;");
-                    data += `((${id} '${safeIconStr}')) ${name}\n`;
+                    let safeIconStr = iconStr.replace(/"/g, "&quot;");
+                    data += `((${id} "${safeIconStr}")) ${name}\n`;
                 }
                 
                 let outlineData = await requestGetDocOutline(id);
@@ -629,8 +628,8 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             if (linkType) {
                 data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
             } else {
-                let safeIconStr = iconStr.replace(/'/g, "&apos;");
-                data += `((${id} '${safeIconStr}')) ${name}\n`;
+                let safeIconStr = iconStr.replace(/"/g, "&quot;");
+                data += `((${id} "${safeIconStr}")) ${name}\n`;
             }
             // console.log(data);
             let item = new IndexQueueNode(tab, data);
@@ -662,7 +661,7 @@ export async function insertDataSimple(id: string, data: string) {
 
 //插入数据
 async function insertData(id: string, data: string, type: string, targetBlockId?: string) {
-    console.log("[IndexPlugin] insertData called with:", { id, type, targetBlockId });
+    // console.log("[IndexPlugin] insertData called with:", { id, type, targetBlockId });
 
     let attrs : any;
 
@@ -680,12 +679,12 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
         let rs = await client.sql({
             stmt: `SELECT * FROM blocks WHERE root_id = '${id}' AND ial like '%custom-${type}-create%' order by updated desc limit 1`
         });
-        console.log("[IndexPlugin] Existing block check:", rs.data[0]);
+        // console.log("[IndexPlugin] Existing block check:", rs.data[0]);
 
         if (rs.data[0]?.id == undefined) {
             // No existing index/outline found
             if (targetBlockId) {
-                console.log("[IndexPlugin] Updating target block (Slash command):", targetBlockId);
+                // console.log("[IndexPlugin] Updating target block (Slash command):", targetBlockId);
                 // Slash command: Replace the slash command block with new content
                 let result = await client.updateBlock({
                     data: data,
@@ -701,9 +700,10 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
                     timeout: 3000
                 });
             } else {
-                console.log("[IndexPlugin] Inserting new block (Button)");
+                // console.log("[IndexPlugin] Inserting new block (Button)");
                 // Topbar button: Append new block
-                let result = await client.insertBlock({
+                // Replace insertBlock with appendBlock to potentially fix "tree not found"
+                let result = await client.appendBlock({
                     data: data,
                     dataType: 'markdown',
                     parentID: id
@@ -718,7 +718,7 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
                 });
             }
         } else {
-            console.log("[IndexPlugin] Updating existing block:", rs.data[0].id);
+            // console.log("[IndexPlugin] Updating existing block:", rs.data[0].id);
             // Existing index/outline found
             let result = await client.updateBlock({
                 data: data,
@@ -732,7 +732,7 @@ async function insertData(id: string, data: string, type: string, targetBlockId?
             
             // If invoked via slash command, delete the slash command block since we updated the existing one
             if (targetBlockId) {
-                console.log("[IndexPlugin] Deleting target block (duplicate/cleanup):", targetBlockId);
+                // console.log("[IndexPlugin] Deleting target block (duplicate/cleanup):", targetBlockId);
                 await client.deleteBlock({
                     id: targetBlockId
                 });
@@ -833,3 +833,38 @@ function queuePopAll(queue: IndexQueue, data: string) {
     }
     return data;
 }
+function extractAnchors(markdown: string): Map<string, string> {
+    const anchors = new Map<string, string>();
+    if (!markdown) return anchors;
+
+    // Match ((id 'anchor')) or ((id "anchor"))
+    const refRegex = /\(\(([a-zA-Z0-9-]+)\s+(?:'|")(.*?)(?:'|")\)\)/g;
+    let match;
+    while ((match = refRegex.exec(markdown)) !== null) {
+        anchors.set(match[1], match[2]);
+    }
+
+    // Match [anchor](siyuan://blocks/id)
+    const linkRegex = /\[(.*?)\]\(siyuan:\/\/blocks\/([a-zA-Z0-9-]+)\)/g;
+    while ((match = linkRegex.exec(markdown)) !== null) {
+        anchors.set(match[2], match[1]);
+    }
+
+    return anchors;
+}
+
+
+function isValidSeparator(anchor: string): boolean {
+    // 1. Short text (e.g. '?', '->', '1.', '??')
+    if (anchor.length <= 6) return true;
+    
+    // 2. Emoji shortcodes (e.g. ':smile:', ':long_emoji_name:')
+    if (anchor.startsWith(':') && anchor.endsWith(':')) return true;
+
+    // 3. Image/Icon links (e.g. '![icon](...)')
+    if (anchor.startsWith('![') && anchor.includes('](') && anchor.endsWith(')')) return true;
+
+    // Otherwise, assume it's unwanted text (like a previous title)
+    return false;
+}
+
