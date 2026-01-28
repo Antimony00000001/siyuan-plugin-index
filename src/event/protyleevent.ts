@@ -1,4 +1,5 @@
-import { insertAuto, insertOutlineAuto } from "../creater/createIndex";
+import { autoUpdateIndex } from "../../newsrc/features/index/action";
+import { autoUpdateOutline } from "../../newsrc/features/outline/action";
 import { isMobile } from "../utils";
 // import { settings } from "./settings";
 
@@ -30,6 +31,6 @@ export function updateIndex({ detail }: any) {
     // 获取文档块id
     let parentId = detail.protyle.block.rootID;
     // 自动插入
-    insertAuto(notebookId,path,parentId);
-    insertOutlineAuto(parentId);
+    autoUpdateIndex(notebookId,path,parentId);
+    autoUpdateOutline(parentId);
 }

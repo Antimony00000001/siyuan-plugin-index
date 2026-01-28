@@ -73,6 +73,12 @@
             </select>
         </label>
         <SettingItem
+            type="range"
+            content={i18n.settingsTab.items.depth}
+            settingKey="depthNotebook"
+            settingValue={settings.get("depthNotebook")}
+        />
+        <SettingItem
             type="select"
             content={i18n.settingsTab.items.listType}
             settingKey="listTypeNotebook"

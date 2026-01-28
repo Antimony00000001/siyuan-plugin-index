@@ -1,8 +1,9 @@
 import { Plugin } from "siyuan";
 import { setI18n, setPlugin } from "./utils";
+import { setI18n as setNewI18n, setPlugin as setNewPlugin } from "../newsrc/shared/utils/index";
 import { createDialog, initTopbar } from "./topbar";
 import { settings } from "./settings";
-import { buildDoc } from "./event/process-list";
+import { buildDoc as buildDocNew } from "../newsrc/features/doc-builder/menu";
 import { updateIndex } from "./event/protyleevent";
 import { initEmojiEvent, removeEmojiEvent } from "./event/emojievent";
 import { addSlash } from "./slash";
@@ -11,13 +12,13 @@ export default class IndexPlugin extends Plugin {
 
     //加载插件
     async onload() {
-        console.log("IndexPlugin onload");
+        console.log("IndexPlugin onload v1.7.1-Refactor");
         this.init();
         await initTopbar();
         // await this.initSettings();
         await settings.initData();
         //监听块菜单事件
-        this.eventBus.on("click-blockicon", buildDoc);
+        this.eventBus.on("click-blockicon", buildDocNew);
         //监听文档载入事件
         this.eventBus.on("loaded-protyle-static", updateIndex);
         // this.eventBus.on("ws-main",this.eventBusLog);
@@ -28,7 +29,7 @@ export default class IndexPlugin extends Plugin {
     // }
 
     onunload() {
-        this.eventBus.off("click-blockicon", buildDoc);
+        this.eventBus.off("click-blockicon", buildDocNew);
         this.eventBus.off("loaded-protyle-static", updateIndex);
         removeEmojiEvent();
         console.log("IndexPlugin onunload");
@@ -38,6 +39,8 @@ export default class IndexPlugin extends Plugin {
     init(){
         setI18n(this.i18n);
         setPlugin(this);
+        setNewI18n(this.i18n);
+        setNewPlugin(this);
         addSlash();
         // console.log(this.getOpenedTab());
     }

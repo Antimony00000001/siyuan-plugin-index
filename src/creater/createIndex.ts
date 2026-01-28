@@ -506,9 +506,14 @@ export function getProcessedDocIcon(icon: string, hasChild: boolean) {
 }
 
 //创建目录
-async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueue, tab = 0) {
+export async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueue, tab = 0, config?: { depth?: number, listType?: string, linkType?: string, icon?: boolean }) {
 
-    if (settings.get("depth") == 0 || settings.get("depth") > tab) {
+    const depth = config?.depth !== undefined ? config.depth : settings.get("depth");
+    const listTypeSetting = config?.listType !== undefined ? config.listType : settings.get("listType");
+    const linkTypeSetting = config?.linkType !== undefined ? config.linkType : settings.get("linkType");
+    const iconEnabled = config?.icon !== undefined ? config.icon : true;
+
+    if (depth == 0 || depth > tab) {
 
         let docs;
         try {
@@ -544,19 +549,19 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                 name = escapeHtml(name);
 
                 //应用设置
-                let listType = settings.get("listType") == "unordered" ? true : false;
+                let listType = listTypeSetting == "unordered" ? true : false;
                 if (listType) {
                     data += "* ";
                 } else {
                     data += "1. ";
                 }
 
-                let iconStr = getProcessedDocIcon(icon, subFileCount != 0);
+                let iconStr = iconEnabled ? getProcessedDocIcon(icon, subFileCount != 0) : "";
 
                 //置入数据
-                let linkType = settings.get("linkType") == "ref" ? true : false;
+                let linkType = linkTypeSetting == "ref" ? true : false;
                 if (linkType) {
-                    data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
+                    data += `${iconStr ? iconStr + ' ' : ''}[${name}](siyuan://blocks/${id})\n`;
                 } else {
                     let safeIconStr = iconStr.replace(/"/g, "&quot;");
                     data += `((${id} "${safeIconStr}")) ${name}\n`;
@@ -571,7 +576,7 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
                 pitem.push(item);
                 //`((id "锚文本"))`
                 if (subFileCount > 0) {//获取下一层级子文档
-                    await createIndexandOutline(notebook, path, item.children, tab);
+                    await createIndexandOutline(notebook, path, item.children, tab, config);
                 }
             } catch (err) {
                 console.error(`Failed to process document "${doc.id}" in createIndexandOutline:`, err);
@@ -589,9 +594,14 @@ async function createIndexandOutline(notebook: any, ppath: any, pitem: IndexQueu
  * @param tab 深度
  * @returns 待插入数据
  */
-async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0) {
+export async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0, config?: { depth?: number, listType?: string, linkType?: string, icon?: boolean }) {
 
-    if (settings.get("depth") == 0 || settings.get("depth") > tab) {
+    const depth = config?.depth !== undefined ? config.depth : settings.get("depth");
+    const listTypeSetting = config?.listType !== undefined ? config.listType : settings.get("listType");
+    const linkTypeSetting = config?.linkType !== undefined ? config.linkType : settings.get("linkType");
+    const iconEnabled = config?.icon !== undefined ? config.icon : true;
+
+    if (depth == 0 || depth > tab) {
 
         let docs = await client.listDocsByPath({
             notebook: notebook,
@@ -616,7 +626,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             name = escapeHtml(name);
 
             //应用设置
-            let listType = settings.get("listType") == "unordered" ? true : false;
+            let listType = listTypeSetting == "unordered" ? true : false;
             if (listType) {
                 data += "* ";
             } else {
@@ -627,12 +637,13 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             //     data += '{: fold="1"}';
             // }
 
-            let iconStr = getProcessedDocIcon(icon, subFileCount != 0);
+            let iconStr = iconEnabled ? getProcessedDocIcon(icon, subFileCount != 0) : "";
 
             //置入数据
-            let linkType = settings.get("linkType") == "ref" ? true : false;
+            let linkType = linkTypeSetting == "ref" ? true : false;
             if (linkType) {
-                data += `[${iconStr}](siyuan://blocks/${id}) ${name}\n`;
+                // For 'ref' (link) mode, if icon exists, place it before the link for Index
+                data += `${iconStr ? iconStr + ' ' : ''}[${name}](siyuan://blocks/${id})\n`;
             } else {
                 let safeIconStr = iconStr.replace(/"/g, "&quot;");
                 data += `((${id} "${safeIconStr}")) ${name}\n`;
@@ -641,7 +652,7 @@ async function createIndex(notebook: any, ppath: any, pitem: IndexQueue, tab = 0
             let item = new IndexQueueNode(tab, data);
             pitem.push(item);
             if (subFileCount > 0) {//获取下一层级子文档
-                await createIndex(notebook, path, item.children, tab);
+                await createIndex(notebook, path, item.children, tab, config);
             }
 
         }
@@ -820,7 +831,7 @@ async function insertDataAfter(id: string, data: string, type: string) {
 
 }
 
-function queuePopAll(queue: IndexQueue, data: string) {
+export function queuePopAll(queue: IndexQueue, data: string) {
 
     if (queue.getFront()?.depth == undefined) {
         return "";

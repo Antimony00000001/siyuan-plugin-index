@@ -2,7 +2,8 @@ import { Dialog } from "siyuan";
 import { client, escapeHtml, i18n } from "../utils";
 import NotebookDialog from "../components/dialog/notebook-dialog.svelte"
 import { settings } from "../settings";
-import { getDocid, getProcessedDocIcon, insertDataSimple } from "./createIndex";
+import { getDocid, getProcessedDocIcon, insertDataSimple, createIndex, queuePopAll } from "./createIndex";
+import { IndexQueue } from "../indexnode";
 // import { settings } from "./settings";
 // import { eventBus } from "./enventbus";
 
@@ -60,47 +61,17 @@ async function onCreate(dialog: Dialog) {
     }
 
     let el: HTMLInputElement = dialog.element.querySelector("#notebook-get");
-    console.log(el.value);
-    let docs = await client.listDocsByPath({
-        notebook: el.value,
-        path: "/"
+    
+    // Use recursive createIndex with custom notebook settings
+    let data = '';
+    let indexQueue = new IndexQueue();
+    await createIndex(el.value, "/", indexQueue, 0, {
+        depth: settings.get("depthNotebook"),
+        listType: settings.get("listTypeNotebook"),
+        linkType: settings.get("linkTypeNotebook"),
+        icon: settings.get("iconNotebook")
     });
-    console.log(docs);
-
-    let data = "";
-
-    //生成写入文本
-    for (let doc of docs.data.files) {
-
-        let id = doc.id;
-        let name = doc.name.slice(0, -3);
-        let icon = doc.icon;
-        let subFileCount = doc.subFileCount;
-
-        //转义
-        name = escapeHtml(name);
-
-        //应用设置
-        let listType = settings.get("listTypeNotebook") == "unordered" ? true : false;
-        if (listType) {
-            data += "* ";
-        } else {
-            data += "1. ";
-        }
-
-        if (settings.get("iconNotebook")) {
-            data += `${getProcessedDocIcon(icon, subFileCount != 0)} `;
-        }
-
-        //置入数据
-        let linkType = settings.get("linkTypeNotebook") == "ref" ? true : false;
-        if (linkType) {
-            data += `[${name}](siyuan://blocks/${id})\n`;
-        } else {
-            data += `((${id} '${name}'))\n`;
-        }
-
-    }
+    data = queuePopAll(indexQueue, data);
 
     if (data != '') {
         await insertDataSimple(parentId, data);

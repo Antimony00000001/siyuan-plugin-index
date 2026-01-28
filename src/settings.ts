@@ -121,6 +121,10 @@ export class SettingsProperty {
     outlineType: string;
     listTypeOutline: string;
     insertionMode: string;
+    depthNotebook: number;
+    listTypeNotebook: string;
+    linkTypeNotebook: string;
+    iconNotebook: boolean;
 
     constructor(){
         this.depth = 0;
@@ -134,6 +138,10 @@ export class SettingsProperty {
         this.outlineType = "ref";
         this.listTypeOutline = "unordered";
         this.insertionMode = "index";
+        this.depthNotebook = 3;
+        this.listTypeNotebook = "unordered";
+        this.linkTypeNotebook = "ref";
+        this.iconNotebook = true;
     }
 
     getAll(){
@@ -148,6 +156,10 @@ export class SettingsProperty {
         this.outlineType = settings.get("outlineType");
         this.listTypeOutline = settings.get("listTypeOutline");
         this.insertionMode = settings.get("insertionMode");
+        this.depthNotebook = settings.get("depthNotebook") ?? 3;
+        this.listTypeNotebook = settings.get("listTypeNotebook") ?? "unordered";
+        this.linkTypeNotebook = settings.get("linkTypeNotebook") ?? "ref";
+        this.iconNotebook = settings.get("iconNotebook") ?? true;
     }
 
 }

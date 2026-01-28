@@ -3,7 +3,8 @@ import {
     //  fetchSyncPost,
     //  openTab
 } from "siyuan";
-import { insert, insertDocButton } from "./creater/createIndex";
+import { insertAction } from "../newsrc/features/index/action";
+import { insertOutlineAction } from "../newsrc/features/outline/action";
 import { i18n, isMobile, plugin } from "./utils";
 import SettingsTab from "./components/setting.svelte"
 import { settings } from "./settings";
@@ -20,7 +21,7 @@ export async function initTopbar() {
         title: i18n.addTopBarIcon,
         position: "right",
         callback: async () => {
-            insert();
+            insertAction();
         }
     });
 
@@ -29,7 +30,7 @@ export async function initTopbar() {
         langKey: "addTopBarIcon",
         hotkey: "⌥⌘I",
         callback: async () => {
-            insert();
+            insertAction();
         }
     });
 
@@ -37,7 +38,7 @@ export async function initTopbar() {
         langKey: "insertoutline",
         hotkey: "⌥⌘O",
         callback: async () => {
-            insertDocButton();
+            insertOutlineAction();
         }
     });
 
@@ -131,7 +132,7 @@ function addMenu(rect?: DOMRect) {
         label: i18n.insertIndex,
         accelerator: plugin.commands[0].customHotkey,
         click: () => {
-            insert();
+            insertAction();
         }
     });
     menu.addItem({
@@ -139,7 +140,7 @@ function addMenu(rect?: DOMRect) {
         label: i18n.insertoutline,
         accelerator: plugin.commands[1].customHotkey,
         click: () => {
-            insertDocButton();
+            insertOutlineAction();
         }
     });
     menu.addSeparator();
