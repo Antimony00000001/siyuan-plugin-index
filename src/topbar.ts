@@ -3,7 +3,7 @@ import {
     //  fetchSyncPost,
     //  openTab
 } from "siyuan";
-import { insert, insertButton, insertDocButton, insertNotebookButton } from "./creater/createIndex";
+import { insert, insertDocButton } from "./creater/createIndex";
 import { i18n, isMobile, plugin } from "./utils";
 import SettingsTab from "./components/setting.svelte"
 import { settings } from "./settings";
@@ -34,26 +34,10 @@ export async function initTopbar() {
     });
 
     plugin.addCommand({
-        langKey: "insertSubIndexoutline",
+        langKey: "insertoutline",
         hotkey: "⌥⌘O",
         callback: async () => {
-            insertButton();
-        }
-    });
-
-    plugin.addCommand({
-        langKey: "insertoutline",
-        hotkey: "⌥⌘P",
-        callback: async () => {
             insertDocButton();
-        }
-    });
-
-    plugin.addCommand({
-        langKey: "insertNotebookIndex",
-        hotkey: "⌥⌘N",
-        callback: async () => {
-            insertNotebookButton();
         }
     });
 
@@ -151,27 +135,11 @@ function addMenu(rect?: DOMRect) {
         }
     });
     menu.addItem({
-        icon: "iconAlignLeft",
-        label: i18n.insertSubIndexoutline,
-        accelerator: plugin.commands[1].customHotkey,
-        click: () => {
-            insertButton();
-        }
-    });
-    menu.addItem({
         icon: "iconAlignCenter",
         label: i18n.insertoutline,
-        accelerator: plugin.commands[2].customHotkey,
+        accelerator: plugin.commands[1].customHotkey,
         click: () => {
             insertDocButton();
-        }
-    });
-    menu.addItem({
-        icon: "iconFilesRoot",
-        label: i18n.insertNotebookIndex,
-        accelerator: plugin.commands[3].customHotkey,
-        click: () => {
-            insertNotebookButton();
         }
     });
     menu.addSeparator();

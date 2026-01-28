@@ -61,6 +61,12 @@
                 <!-- bind:this={templateTab} -->
                 <SettingItem
                     type="select"
+                    content={i18n.settingsTab.items.insertionMode}
+                    settingKey="insertionMode"
+                    settingValue={settingsStrings.insertionMode}
+                />
+                <SettingItem
+                    type="select"
                     content={i18n.settingsTab.items.listType}
                     settingKey="listType"
                     settingValue={settingsStrings.listType}

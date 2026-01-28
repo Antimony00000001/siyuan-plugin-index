@@ -95,6 +95,7 @@ class Settings{
         this.set("fold", data.fold ?? def.fold);
         this.set("col", data.col ?? def.col);
         this.set("autoUpdate", data.autoUpdate ?? def.autoUpdate);
+        this.set("insertionMode", data.insertionMode ?? def.insertionMode);
     }
 
     loadSettingsforOutline(data: any){
@@ -119,6 +120,7 @@ export class SettingsProperty {
     outlineAutoUpdate: boolean;
     outlineType: string;
     listTypeOutline: string;
+    insertionMode: string;
 
     constructor(){
         this.depth = 0;
@@ -131,6 +133,7 @@ export class SettingsProperty {
         this.outlineAutoUpdate = false;
         this.outlineType = "ref";
         this.listTypeOutline = "unordered";
+        this.insertionMode = "index";
     }
 
     getAll(){
@@ -144,6 +147,7 @@ export class SettingsProperty {
         this.outlineAutoUpdate = settings.get("outlineAutoUpdate");
         this.outlineType = settings.get("outlineType");
         this.listTypeOutline = settings.get("listTypeOutline");
+        this.insertionMode = settings.get("insertionMode");
     }
 
 }

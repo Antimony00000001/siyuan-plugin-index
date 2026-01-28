@@ -15,6 +15,16 @@ export async function insert(targetBlockId?: string) {
     //载入配置
     await settings.load();
 
+    // Check insertion mode
+    const mode = settings.get("insertionMode");
+    if (mode === "index_outline") {
+        await insertButton();
+        return;
+    } else if (mode === "notebook") {
+        await insertNotebookButton();
+        return;
+    }
+
     //寻找当前编辑的文档的id
     let parentId = getDocid();
     if (parentId == null) {

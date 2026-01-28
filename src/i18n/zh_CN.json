@@ -3,7 +3,7 @@
   "insertIndex": "插入目录",
   "insertNotebookIndex": "插入笔记本目录",
   "insertSubIndexoutline": "插入子文档目录及大纲",
-  "insertoutline": "插入当前文档大纲",
+  "insertoutline": "插入大纲",
   "settings": "设置",
   "cancel": "取消",
   "save": "保存",
@@ -81,6 +81,15 @@
         "options": {
           "ref": "链接",
           "embed": "引用"
+        }
+      },
+      "insertionMode": {
+        "title": "插入模式",
+        "content": "设置点击“插入目录”时的行为",
+        "options": {
+          "index": "插入子文档目录",
+          "index_outline": "插入子文档目录及大纲",
+          "notebook": "插入笔记本目录"
         }
       },
       "builder": {

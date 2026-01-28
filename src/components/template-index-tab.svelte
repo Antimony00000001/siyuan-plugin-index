@@ -63,6 +63,14 @@
     <div class="fn_flex" style="flex-direction: column;">
         <TemplateItem
             type="select"
+            content={i18n.settingsTab.items.insertionMode}
+            settingKey="insertionMode"
+            settingValue={settings.get("insertionMode",name)}
+            {name}
+        />
+        <div class="fn__hr" />
+        <TemplateItem
+            type="select"
             content={i18n.settingsTab.items.listType}
             settingKey="listType"
             settingValue={settings.get("listType",name)}
