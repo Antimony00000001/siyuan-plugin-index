@@ -144,44 +144,8 @@ export async function autoUpdateIndex(notebookId: string, path: string, parentId
             return;
         }
 
-        // Check for mismatch
-        const keysToCheck = ["depth", "listType", "linkType", "fold", "col"];
-        let mismatch = false;
-        for (const key of keysToCheck) {
-            if (localSettings[key] !== settings.get(key)) {
-                console.log(`[IndexPlugin] AutoUpdate Mismatch on ${key}: Local=${localSettings[key]}, Global=${settings.get(key)}`);
-                mismatch = true;
-                break;
-            }
-        }
-
-                if (mismatch) {
-
-                    await new Promise<void>((resolve) => {
-
-                        confirmDialog(i18n.confirmDialog.title, i18n.confirmDialog.content, () => {
-
-                            console.log("[IndexPlugin] User confirmed update (Auto)");
-
-                            resolve();
-
-                        }, () => {
-
-                            console.log("[IndexPlugin] User kept Local (Auto)");
-
-                            settings.loadSettings(localSettings);
-
-                            resolve();
-
-                        }, i18n.update, i18n.keep);
-
-                    });
-
-                }
-
-         else {
-            settings.loadSettings(localSettings);
-        }
+        // Auto-update always uses local settings without prompting
+        settings.loadSettings(localSettings);
 
         if (!settings.get("autoUpdate")) return;
 
