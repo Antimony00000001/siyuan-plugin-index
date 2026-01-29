@@ -26,21 +26,20 @@ export class BlockService {
         try {
             // 1. Check for existing block
             let rs = await client.sql({
-                stmt: `SELECT * FROM blocks WHERE root_id = '${rootId}' AND ial like '%${attrName}%' order by updated desc limit 1`
+                stmt: `SELECT id, type, parent_id FROM blocks WHERE root_id = '${rootId}' AND ial like '%${attrName}%' order by updated desc limit 1`
             });
 
             if (rs.data[0]?.id == undefined) {
                 // === Case: Insert New ===
+                console.log(`[BlockService] No existing ${type} found. Inserting new.`);
                 let result;
                 if (targetBlockId) {
-                    // Slash command: Replace target
                     result = await client.updateBlock({
                         data: data,
                         dataType: 'markdown',
                         id: targetBlockId
                     });
                 } else {
-                    // Button: Prepend to doc (Top)
                     result = await client.prependBlock({
                         data: data,
                         dataType: 'markdown',
@@ -53,11 +52,15 @@ export class BlockService {
 
                 // If Outline (Blockquote), find inner List to bind attribute
                 if (type == "outline") {
-                    for (let i = 0; i < 5; i++) {
+                    console.log(`[BlockService] Outline inserted (ID: ${opId}). Searching for inner list...`);
+                    for (let i = 0; i < 10; i++) {
                         await sleep(300);
-                        let childRs = await client.sql({ stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' LIMIT 1` });
-                        if (childRs.data[0]) {
+                        let childRs = await client.sql({ 
+                            stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' AND type = 'l' LIMIT 1` 
+                        });
+                        if (childRs.data && childRs.data[0]) {
                             attrTargetId = childRs.data[0].id;
+                            console.log(`[BlockService] Found inner list for binding: ${attrTargetId}`);
                             break;
                         }
                     }
@@ -68,10 +71,7 @@ export class BlockService {
                     id: attrTargetId
                 });
                 
-                // Provide feedback via client pushMsg? Or let caller handle?
-                // For shared service, maybe better to return result and let caller handle UI?
-                // But for 1:1 port, we can keep it here or use a callback.
-                // keeping it simple: return success status.
+                console.log(`[BlockService] Attributes bound to ${attrTargetId}`);
                 return { success: true, msg: "insert_success" };
 
             } else {
@@ -79,30 +79,35 @@ export class BlockService {
                 let currentId = rs.data[0].id;
                 let updateTargetId = currentId;
 
+                console.log(`[BlockService] Found existing ${type} at ${currentId} (Type: ${rs.data[0].type})`);
+
                 // Outline Fix: If attr is on List, update parent BQ
                 if (type == "outline" && rs.data[0].type === 'l') {
                      let parentRs = await client.sql({ stmt: `SELECT id, type FROM blocks WHERE id = '${rs.data[0].parent_id}'` });
                      if (parentRs.data[0] && parentRs.data[0].type === 'b') {
                          updateTargetId = parentRs.data[0].id;
+                         console.log(`[BlockService] Updating parent blockquote: ${updateTargetId}`);
                      }
                 }
 
-                let result = await client.updateBlock({
+                await client.updateBlock({
                     data: data,
                     dataType: 'markdown',
                     id: updateTargetId
                 });
 
-                let opId = result.data[0].doOperations[0].id;
-                let attrTargetId = opId;
-
-                // Re-bind to new inner List
+                // Re-bind attributes to ensure they persist or update
+                let attrTargetId = updateTargetId;
                 if (type == "outline") {
-                    for (let i = 0; i < 5; i++) {
+                    console.log(`[BlockService] Outline updated. Re-searching for inner list in ${updateTargetId}...`);
+                    for (let i = 0; i < 10; i++) {
                         await sleep(300);
-                        let childRs = await client.sql({ stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' LIMIT 1` });
-                        if (childRs.data[0]) {
+                        let childRs = await client.sql({ 
+                            stmt: `SELECT id FROM blocks WHERE parent_id = '${updateTargetId}' AND type = 'l' LIMIT 1` 
+                        });
+                        if (childRs.data && childRs.data[0]) {
                             attrTargetId = childRs.data[0].id;
+                            console.log(`[BlockService] Found new inner list for re-binding: ${attrTargetId}`);
                             break;
                         }
                     }
@@ -113,14 +118,15 @@ export class BlockService {
                     id: attrTargetId
                 });
                 
-                if (targetBlockId) {
+                if (targetBlockId && targetBlockId !== updateTargetId) {
                     await client.deleteBlock({ id: targetBlockId });
                 }
 
+                console.log(`[BlockService] Attributes re-bound to ${attrTargetId}`);
                 return { success: true, msg: "update_success" };
             }
         } catch (error) {
-            console.error("BlockService insertOrUpdate error:", error);
+            console.error("[BlockService] insertOrUpdate error:", error);
             throw error;
         }
     }
