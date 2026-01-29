@@ -1,4 +1,3 @@
-import { fetchSyncPost } from "siyuan";
 import { plugin } from "../../shared/utils";
 
 export const CONFIG = "config";
@@ -83,29 +82,6 @@ class Settings {
 
     async save(config = CONFIG){
         await plugin.saveData(config, plugin.data[config]);
-    }
-
-    async saveCopy(config = CONFIG){
-        await plugin.saveData(config, plugin.data[config]);
-    }
-
-    async saveTo(config: string){
-        plugin.data[config]["builder"] = plugin.data[CONFIG]["builder"];
-        await plugin.saveData(CONFIG, plugin.data[config]);
-    }
-
-    async remove(config = CONFIG){
-        await plugin.removeData(config);
-    }
-
-    async rename(config: string, newname: string){
-        await fetchSyncPost(
-            "/api/file/renameFile",
-            {
-                "path": `/data/storage/petal/siyuan-plugins-index/${config}`,
-                "newPath": `/data/storage/petal/siyuan-plugins-index/${newname}`
-            }
-        );
     }
 
     loadSettings(data: any){

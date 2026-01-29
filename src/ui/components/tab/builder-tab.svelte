@@ -8,8 +8,8 @@
 </script>
 
 <div
-data-name="extra"
-class={tabbarfocus === "extra"
+data-name="builder"
+class={tabbarfocus === "builder"
     ? "config__tab-container"
     : "config__tab-container fn__none"}
 >

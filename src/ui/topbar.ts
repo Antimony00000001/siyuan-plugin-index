@@ -8,7 +8,6 @@ import { insertOutlineAction } from "../features/outline/action";
 import { i18n, isMobile, plugin } from "../shared/utils";
 import SettingsTab from "./components/setting.svelte"
 import { settings } from "../core/settings";
-import { onGetTemplate } from "../features/template/create-template";
 
 // //tab类型
 // const TAB_TYPE = "custom_tab";
@@ -107,12 +106,11 @@ export async function initTopbar() {
 export async function createDialog() {
     //载入配置
     await settings.load();
-    await onGetTemplate();
 
     const settingsDialog = "index-settings"
 
     const dialog = new Dialog({
-        title: i18n.settingsTab.name,
+        title: "",
         content: `<div id="${settingsDialog}" class="fn__flex-1 fn__flex config__panel">`,
         width: "70%",
         height: "70%",
