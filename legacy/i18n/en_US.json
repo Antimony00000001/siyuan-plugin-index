@@ -43,6 +43,7 @@
   "nothasTemplate":"There is currently no template available",
   "cliketoAdd":"Click to add a template",
   "loading": "Loading……",
+  "recent": "Recent",
   "settingsTab": {
     "items": {
       "depth": {

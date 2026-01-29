@@ -18,6 +18,10 @@ async function handleAltClick(event: MouseEvent) {
 
     const target = event.target as HTMLElement;
     const textContent = target.textContent?.trim() || "";
+    
+    // Ignore the fixed separator character
+    if (textContent === "➖") return;
+
     console.log("handleAltClick - textContent:", textContent); // Debug log
 
     // Matches:

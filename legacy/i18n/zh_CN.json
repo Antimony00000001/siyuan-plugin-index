@@ -43,6 +43,7 @@
   "nothasTemplate": "当前无模版",
   "cliketoAdd": "点击前往添加模板",
   "loading": "加载中……",
+  "recent": "最近使用",
   "settingsTab": {
     "items": {
       "depth": {

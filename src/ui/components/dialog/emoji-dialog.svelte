@@ -1,11 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { i18n } from "../../../shared/utils";
+    import { fetchSyncPost } from "siyuan";
 
     export let onSelect: (emoji: string) => void;
     
     // Data
     let emojis: any[] = [];
+    let recentEmojis: any[] = [];
     let filteredEmojis: any[] = [];
     let searchText = "";
     let panelElement: HTMLElement;
@@ -18,47 +20,69 @@
         if (siyuan && siyuan.emojis) {
             // Filter out the "custom" category as it's not supported
             emojis = siyuan.emojis.filter(category => category.id !== "custom");
-            filteredEmojis = emojis;
+            
+            // Load Recent Emojis
+            const recentUnicodes = siyuan.config.editor.emoji || [];
+            recentEmojis = [];
+            const allItems = emojis.flatMap(cat => cat.items);
+            
+            for (const unicode of recentUnicodes) {
+                const item = allItems.find(i => i.unicode === unicode);
+                if (item) {
+                    recentEmojis.push(item);
+                }
+            }
+            
+            filterEmoji();
         }
     });
 
     function unicode2Emoji(unicode: string) {
         if (!unicode) return "";
         
-        // Hex sequence regex (only hex chars, dots, and hyphens)
-        const hexPattern = /^[0-9a-fA-F]+([.-][0-9a-fA-F]+)*$/;
+        // Custom emoji / image check
+        if (unicode.includes(".") || unicode.includes("/")) {
+            return `<img class="emoji" src="/emojis/${unicode}" alt="${unicode}" />`;
+        }
+
+        // Hex sequence regex (only hex chars and hyphens)
+        const hexPattern = /^[0-9a-fA-F-]+$/;
         
         if (hexPattern.test(unicode)) {
             try {
-                // Split by either . or -
-                if (unicode.indexOf(".") > -1 || unicode.indexOf("-") > -1) {
-                    const result = unicode.split(/[.-]/).map(item => String.fromCodePoint(parseInt(item, 16))).join("");
-                    return result;
-                } else {
-                    const result = String.fromCodePoint(parseInt(unicode, 16));
-                    return result;
-                }
+                const result = unicode.split("-").map(item => String.fromCodePoint(parseInt(item, 16))).join("");
+                return result;
             } catch (e) {
                 return unicode;
             }
         }
         
-        // Fallback for non-hex strings (should be rare if custom emojis are removed from UI)
         return unicode;
     }
 
     function filterEmoji() {
+        const result = [];
+        
+        // Add Recent category if not searching
+        if (!searchText && recentEmojis.length > 0) {
+            result.push({
+                title: i18n.recent || "Recent",
+                id: "recent",
+                items: recentEmojis
+            });
+        }
+
         if (!searchText) {
-            filteredEmojis = emojis;
+            filteredEmojis = [...result, ...emojis];
             return;
         }
         
         const lowerSearch = searchText.toLowerCase();
-        const result = [];
         
         for (const category of emojis) {
             const matchingItems = category.items.filter(item => 
                 (item.description && item.description.toLowerCase().includes(lowerSearch)) || 
+                (item.description_zh_cn && item.description_zh_cn.toLowerCase().includes(lowerSearch)) ||
                 (item.keywords && item.keywords.toLowerCase().includes(lowerSearch)) ||
                 (item.unicode && item.unicode.includes(lowerSearch))
             );
@@ -73,28 +97,60 @@
         filteredEmojis = result;
     }
 
-    function selectEmoji(emojiHex: string) {
-        if (onSelect) {
-            // Determine if it's a unicode hex
-            const hexPattern = /^[0-9a-fA-F]+([.-][0-9a-fA-F]+)*$/;
-            
-            if (hexPattern.test(emojiHex)) {
-                // It's a hex sequence, convert to character
-                try {
-                    let converted = "";
-                    if (emojiHex.indexOf(".") > -1 || emojiHex.indexOf("-") > -1) {
-                         converted = emojiHex.split(/[.-]/).map(item => String.fromCodePoint(parseInt(item, 16))).join("");
-                    } else {
-                         converted = String.fromCodePoint(parseInt(emojiHex, 16));
-                    }
-                    onSelect(converted);
-                } catch (e) {
-                    // Fallback to raw if conversion fails
-                    onSelect(emojiHex);
-                }
+    async function selectEmoji(emojiItem: any) {
+        console.log("[EmojiDialog] selectEmoji triggered with:", emojiItem);
+        const emojiHex = typeof emojiItem === 'string' ? emojiItem : emojiItem?.unicode;
+        
+        if (!emojiHex) {
+            console.warn("[EmojiDialog] Invalid emoji item selected.");
+            return;
+        }
+
+        let selectedValue = "";
+        try {
+            // Determine display character/img
+            if (emojiHex.includes(".") || emojiHex.includes("/")) {
+                selectedValue = emojiHex; // Keep path for images
             } else {
-                // Pass as is (might be direct character)
-                onSelect(emojiHex);
+                try {
+                    selectedValue = emojiHex.split("-").map(item => String.fromCodePoint(parseInt(item, 16))).join("");
+                } catch (e) {
+                    console.warn("[EmojiDialog] Unicode conversion failed, using raw hex:", e);
+                    selectedValue = emojiHex;
+                }
+            }
+            
+            // Update Siyuan Recent List
+            const siyuan = (window as any).siyuan;
+            if (siyuan && emojiHex && emojiHex !== "📄") {
+                console.log("[EmojiDialog] Updating Siyuan recent emojis list...");
+                const recent = [...(siyuan.config.editor.emoji || [])];
+                const index = recent.indexOf(emojiHex);
+                if (index > -1) {
+                    recent.splice(index, 1);
+                }
+                recent.unshift(emojiHex);
+                if (recent.length > 32) {
+                    recent.pop();
+                }
+                siyuan.config.editor.emoji = recent;
+                
+                try {
+                    await fetchSyncPost("/api/system/setEditorConf", {
+                        emoji: recent
+                    });
+                } catch (apiError) {
+                    console.error("[EmojiDialog] Failed to update Siyuan configuration:", apiError);
+                }
+            }
+        } catch (err) {
+            console.error("[EmojiDialog] Error in selectEmoji logic:", err);
+        } finally {
+            if (onSelect) {
+                console.log("[EmojiDialog] Calling onSelect with value:", selectedValue);
+                onSelect(selectedValue);
+            } else {
+                console.error("[EmojiDialog] onSelect callback is missing!");
             }
         }
     }
@@ -103,13 +159,13 @@
         const allItems = emojis.flatMap(cat => cat.items);
         if (allItems.length > 0) {
             const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-            selectEmoji(randomItem.unicode);
+            selectEmoji(randomItem);
         }
     }
 
-    function scrollToCategory(index) {
+    function scrollToCategory(id: string) {
         if (panelElement) {
-             const title = panelElement.querySelector(`[data-category-index="${index}"]`);
+             const title = panelElement.querySelector(`[data-category-id="${id}"]`);
              if (title) title.scrollIntoView({ behavior: 'smooth' });
         }
     }
@@ -118,15 +174,21 @@
 <div class="emojis">
     <!-- Tab Header -->
     <div class="emojis__tabheader">
-        <div class="ariaLabel block__icon block__icon--show {activeTab === 'emoji' ? 'block__icon--active' : ''}" aria-label="Emoji" on:click={() => activeTab = 'emoji'} on:keydown={() => {}}>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="ariaLabel block__icon block__icon--show {activeTab === 'emoji' ? 'block__icon--active' : ''}" aria-label="Emoji" on:click={() => activeTab = 'emoji'}>
             <svg><use xlink:href="#iconEmoji"></use></svg>
         </div>
         <div class="fn__space"></div>
-        <div class="ariaLabel block__icon block__icon--show {activeTab === 'dynamic' ? 'block__icon--active' : ''}" aria-label="Dynamic Icon" on:click={() => activeTab = 'dynamic'} on:keydown={() => {}}>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <div class="ariaLabel block__icon block__icon--show {activeTab === 'dynamic' ? 'block__icon--active' : ''}" aria-label="Dynamic Icon" on:click={() => activeTab = 'dynamic'}>
             <svg><use xlink:href="#iconCalendar"></use></svg>
         </div>
         <div class="fn__flex-1"></div>
-        <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Reset" on:click={() => selectEmoji("📄")} on:keydown={() => {}}>
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Reset" on:click={() => selectEmoji("📄")}>
             <svg><use xlink:href="#iconUndo"></use></svg>
         </span>
     </div>
@@ -143,7 +205,9 @@
                     <input class="b3-form__icon-input b3-text-field fn__block" placeholder={i18n?.search || "Search"} bind:value={searchText} on:input={filterEmoji}>
                 </label>
                 <span class="fn__space"></span>
-                <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Random" on:click={pickRandom} on:keydown={() => {}}>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <span class="block__icon block__icon--show fn__flex-center ariaLabel" aria-label="Random" on:click={pickRandom}>
                     <svg><use xlink:href="#iconRefresh"></use></svg>
                 </span>
                 <span class="fn__space"></span>
@@ -151,13 +215,13 @@
 
             <!-- Emoji Grid Panel -->
             <div class="emojis__panel" bind:this={panelElement}>
-                {#each filteredEmojis as category, index}
-                    <div class="emojis__title" data-category-index={index}>
+                {#each filteredEmojis as category}
+                    <div class="emojis__title" data-category-id={category.id}>
                         {category.title}
                     </div>
                     <div class="emojis__content">
                         {#each category.items as item}
-                            <button class="emojis__item ariaLabel" aria-label={item.description} on:click={() => selectEmoji(item.unicode)}>
+                            <button class="emojis__item ariaLabel" aria-label={item.description} on:click={() => selectEmoji(item)}>
                                 {@html unicode2Emoji(item.unicode)}
                             </button>
                         {/each}
@@ -167,9 +231,17 @@
             
              <!-- Category Bottom Bar -->
              <div class="fn__flex" style="overflow-x: auto; padding: 4px 0;">
-                {#each emojis as category, index}
-                     <div class="emojis__type ariaLabel" aria-label={category.title} on:click={() => scrollToCategory(index)} on:keydown={() => {}}>
-                         <!-- Use the first emoji as icon if available, or a generic icon -->
+                {#if !searchText && recentEmojis.length > 0}
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                    <div class="emojis__type ariaLabel" aria-label={i18n.recent} on:click={() => scrollToCategory("recent")}>
+                        <svg><use xlink:href="#iconRefresh"></use></svg>
+                    </div>
+                {/if}
+                {#each emojis as category}
+                     <!-- svelte-ignore a11y-click-events-have-key-events -->
+                     <!-- svelte-ignore a11y-no-static-element-interactions -->
+                     <div class="emojis__type ariaLabel" aria-label={category.title} on:click={() => scrollToCategory(category.id)}>
                          {#if category.items[0]?.unicode}
                              {@html unicode2Emoji(category.items[0].unicode)}
                          {:else}
@@ -238,7 +310,7 @@ div[data-type="tab-emoji"] {
     width: 32px;
 }
 
-.emojis__item img, .emojis__item svg {
+.emojis__item :global(img), .emojis__item :global(svg) {
     height: 24px;
     display: block;
     width: 24px;
@@ -287,8 +359,9 @@ div[data-type="tab-emoji"] {
     background-color: var(--b3-theme-surface-lighter);
 }
 
-.emojis__type svg, .emojis__type img {
+.emojis__type :global(svg), .emojis__type :global(img) {
     height: 16px;
     width: 16px;
 }
 </style>
+
