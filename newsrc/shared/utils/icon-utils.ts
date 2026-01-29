@@ -14,6 +14,7 @@ export function getProcessedDocIcon(icon: string, hasChild: boolean) {
         let result = "";
         try {
             for (const element of icon.split("-")) {
+                if (!element) continue;
                 const codePoint = parseInt(element, 16);
                 if (isNaN(codePoint)) {
                     return hasChild ? "📑" : "📄";
@@ -26,12 +27,6 @@ export function getProcessedDocIcon(icon: string, hasChild: boolean) {
         }
     }
     
-    // 2. Direct Emoji / Short text (heuristic)
-    // Avoids paths like "api/icon/..." or "image.png"
-    if (icon.length <= 4 && !icon.includes("/")) {
-        return icon;
-    }
-
-    // 3. Complex/Dynamic/File Icon -> Default
+    // 2. Default for all other cases (Complex/Dynamic/File Icon/Static Text)
     return hasChild ? "📑" : "📄";
 }
