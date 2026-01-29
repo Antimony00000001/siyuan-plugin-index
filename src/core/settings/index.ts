@@ -38,7 +38,7 @@ export class SettingsProperty {
         this.linkTypeNotebook = "ref";
         this.iconNotebook = true;
         this.icon = false;
-        this.iconOutline = false;
+        this.iconOutline = true;
     }
 
     getAll(){

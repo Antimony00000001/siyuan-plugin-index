@@ -68,7 +68,7 @@
       },
       "icon": {
         "title": "图标",
-        "content": "设置插入目录时是否显示图标"
+        "content": "设置插入时是否显示图标。<br><span style='color: blue;'>注：如需同步标题内的富文本格式，请开启此项</span>"
       },
       "autoUpdate": {
         "title": "自动更新",

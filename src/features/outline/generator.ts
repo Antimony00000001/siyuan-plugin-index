@@ -1,4 +1,5 @@
 import { settings } from "../../core/settings";
+import { stripMarkdownSyntax } from "../../shared/utils/markdown-utils";
 
 function filterIAL(ialStr: string) {
     if (!ialStr) return "";
@@ -55,44 +56,44 @@ export function generateOutlineMarkdown(outlineData: any[], tab: number, stab: n
 
         data += indent + listMarker;
 
-        let outlineType = settings.get("outlineType"); // "copy", "ref", "embed" -> actually stored as string in settings usually?
-        // SettingsProperty defines outlineType as string. "ref", "embed", "copy".
-        
+        let outlineType = settings.get("outlineType"); // "copy", "ref", "embed"
         let ialStr = ial ? `\n${indent}   {: ${ial}}` : "";
 
         if (outlineType == "copy") {
             data += `${name}((${id} '*'))${ialStr}\n`;
         } else {
-            let iconEnabled = settings.get("iconOutline") ?? false;
+            let iconEnabled = settings.get("iconOutline") ?? true;
             let anchorText = existingAnchors?.get(id);
 
-            // If icons disabled, ignore default separator
-            if (!iconEnabled && anchorText === "➖") {
-                anchorText = undefined;
-            }
-
-            if (!anchorText) {
-                if (iconEnabled) {
-                    anchorText = "➖";
-                } else {
-                    anchorText = name;
+            // Strategy 2: If no icon, use plain text and bind to it
+            if (!iconEnabled) {
+                // If existing anchor is the default icon, discard it
+                if (anchorText === "➖") anchorText = undefined;
+                
+                // If no custom anchor, use plain text
+                if (!anchorText) {
+                    anchorText = stripMarkdownSyntax(name);
                 }
+            } else {
+                // Strategy 1: If icon enabled, default to icon if no anchor
+                if (!anchorText) anchorText = "➖";
             }
 
-            let isAnchorName = (anchorText === name);
             let safeAnchorText = anchorText.replace(/"/g, "&quot;");
 
-            if (outlineType == "ref") { // Link
-                if (isAnchorName) {
-                    data += `[${anchorText}](siyuan://blocks/${id})${ialStr}\n`;
-                } else {
+            if (iconEnabled) {
+                // Icon Enabled: Bind to Icon + Append Rich Text
+                if (outlineType == "ref") {
                     data += `[${anchorText}](siyuan://blocks/${id}) ${name}${ialStr}\n`;
-                }
-            } else { // Block Ref (Embed/Static Ref)
-                if (isAnchorName) {
-                    data += `((${id} "${safeAnchorText}"))${ialStr}\n`;
                 } else {
                     data += `((${id} "${safeAnchorText}")) ${name}${ialStr}\n`;
+                }
+            } else {
+                // Icon Disabled: Bind to Plain Text (No append)
+                if (outlineType == "ref") {
+                    data += `[${anchorText}](siyuan://blocks/${id})${ialStr}\n`;
+                } else {
+                    data += `((${id} "${safeAnchorText}"))${ialStr}\n`;
                 }
             }
         }

@@ -68,7 +68,7 @@
       },
       "icon": {
         "title": "Icon",
-        "content":"Set whether to display icons when inserting Index"
+        "content":"Set whether to display icons when inserting. <br><span style='color: blue;'>Note: Please enable this if you want to synchronize formatting within titles.</span>"
       },
       "autoUpdate": {
         "title": "Auto update",
