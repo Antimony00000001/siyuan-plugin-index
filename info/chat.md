@@ -75,9 +75,34 @@
 
 ---
 
-## 📊 总结：主要功能流
+## 🆕 重构架构 (Refactored Structure - `newsrc/`)
 
-1.  **插入目录 (Index)**: `topbar/slash` -> `insert()` -> `createIndex()` (递归) -> `insertData()` (prependBlock/insertBlock).
-2.  **插入大纲 (Outline)**: `topbar/slash` -> `insertDocButton()` -> `insertOutline()` (递归, 包含 `> `) -> `insertData()` (绑定属性到 inner list).
-3.  **自动更新**: `doc loaded` -> `updateIndex` -> `insertAuto/insertOutlineAuto` -> 读取旧属性 -> 提取保留锚文本 -> 重新生成 -> `insertData` (更新).
-4.  **文档构建器**: `click menu` -> `buildDoc` -> `syncManager` (检查安全) -> `ListProcessor` -> `IBlockProcessor`.
+正在开发中的新一代模块化架构，旨在解决 `src/creater/createIndex.ts` 的巨石问题，实现更好的关注点分离。
+
+### 1. 核心层 (`newsrc/core`)
+*   **`settings/index.ts`**: 集中式的配置管理模块。
+
+### 2. 功能层 (`newsrc/features`)
+业务逻辑按功能特性拆分。
+*   **`doc-builder/`**: 文档构建器功能（原 Smart List Sync）。
+    *   `builder.ts`: 构建逻辑核心。
+    *   `menu.ts`: 菜单交互逻辑。
+    *   `processor.ts`: 列表与块的处理逻辑。
+*   **`index/`**: 目录生成功能。
+    *   `action.ts`: 用户交互动作（插入、更新）。
+    *   `generator.ts`: Markdown 目录生成算法。
+*   **`outline/`**: 大纲生成功能。
+    *   `action.ts`: 用户交互动作。
+    *   `generator.ts`: 大纲生成逻辑（标题提取等）。
+
+### 3. 共享层 (`newsrc/shared`)
+通用的工具与底层服务。
+*   **`api-client/`**: 封装与思源笔记 API 的交互。
+    *   `index.ts`: 核心 API 客户端。
+    *   `query.ts`: SQL 查询相关封装。
+*   **`utils/`**: 通用工具库。
+    *   `icon-utils.ts`: 图标处理（Unicode Hex/Emoji/Default 逻辑）。
+    *   `markdown-utils.ts`: Markdown 格式化与解析工具。
+    *   `anchor-utils.ts`: 锚文本处理与保留逻辑。
+    *   `index-queue.ts`: 索引操作队列，防止并发冲突。
+    *   `index.ts`: 其他通用工具。

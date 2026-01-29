@@ -1,6 +1,6 @@
 import { client, BlockService } from "../../shared/api-client";
 import { getBlocksData, collectOutlineIds, requestGetDocOutline } from "../../shared/api-client/query";
-import { getDocid, i18n, plugin } from "../../shared/utils";
+import { getDocid, i18n, plugin, confirmDialog } from "../../shared/utils";
 import { extractAnchors, isValidSeparator } from "../../shared/utils/anchor-utils";
 import { settings, CONFIG } from "../../core/settings";
 import { generateOutlineMarkdown } from "./generator";
@@ -10,20 +10,52 @@ export async function insertOutlineAction(targetBlockId?: string) {
 
     let parentId = getDocid();
     if (parentId == null) {
-        // Warning: using plugin.pushErrMsg if client doesn't expose it directly or use client wrapper
-        // The original code used client.pushErrMsg via utils wrapper.
-        // My shared client is from SDK. 
-        // I should probably use the SDK client's pushErrMsg or similar if available, or the utils one.
-        // I will use `client` from my shared/api-client which wraps SDK Client.
-        // Does SDK Client have pushErrMsg? Yes usually.
-        // Actually, let's use the one from utils to be safe if I exported it.
-        // Wait, I didn't export `client` from `shared/utils`. I exported `client` from `shared/api-client`.
-        // I will assume `client` has `pushErrMsg`.
-        // Actually, the original `utils.ts` exported `client = new Client()`.
-        // So yes.
-        // But `i18n` is needed.
         console.error("No doc ID found"); 
         return;
+    }
+
+    // Check for existing outline (Manual Insert/Update)
+    console.log("[IndexPlugin] Checking for existing outline...");
+    let rs = await client.sql({
+        stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-outline-create%' order by updated desc limit 1`
+    });
+
+    if (rs.data[0]?.id != undefined) {
+         console.log("[IndexPlugin] Found existing outline:", rs.data[0].id);
+         let ial = await client.getBlockAttrs({ id: rs.data[0].id });
+         let str = ial.data["custom-outline-create"];
+         let localSettings: any = {};
+         try {
+             localSettings = JSON.parse(str);
+             console.log("[IndexPlugin] Local Outline settings:", localSettings);
+         } catch (e) {
+             console.error("[IndexPlugin] Error parsing settings", e);
+         }
+
+         const keysToCheck = ["outlineType", "listTypeOutline"];
+         let mismatch = false;
+         for (const key of keysToCheck) {
+             if (localSettings[key] !== settings.get(key)) {
+                 console.log(`[IndexPlugin] Mismatch on ${key}: Local=${localSettings[key]}, Global=${settings.get(key)}`);
+                 mismatch = true;
+                 break;
+             }
+         }
+         
+         if (mismatch) {
+              await new Promise<void>((resolve) => {
+                 confirmDialog(i18n.confirmDialog.title, i18n.confirmDialog.content, () => {
+                     console.log("[IndexPlugin] User confirmed update to Global (Outline)");
+                     resolve();
+                 }, () => {
+                     console.log("[IndexPlugin] User kept Local settings (Outline)");
+                     settings.loadSettingsforOutline(localSettings);
+                     resolve();
+                 }, i18n.update, i18n.keep);
+              });
+         }
+    } else {
+        console.log("[IndexPlugin] No existing outline found.");
     }
 
     let outlineData = await requestGetDocOutline(parentId);
@@ -52,6 +84,7 @@ export async function insertOutlineAction(targetBlockId?: string) {
 
 export async function autoUpdateOutline(parentId: string) {
     await settings.load();
+    console.log("[IndexPlugin] Auto-updating outline for doc:", parentId);
 
     let rs = await client.sql({
         stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-outline-create%' order by updated desc limit 1`
@@ -71,11 +104,56 @@ export async function autoUpdateOutline(parentId: string) {
         }
 
         let str = ial.data["custom-outline-create"];
+        let localSettings: any = {};
         try {
-            let parsedSettings = JSON.parse(str);
-            settings.loadSettingsforOutline(parsedSettings);
+            localSettings = JSON.parse(str);
         } catch (e) {
             console.error("Failed to parse settings", e);
+        }
+
+        // Check if local outlineAutoUpdate is enabled
+        if (localSettings.outlineAutoUpdate === false) {
+             console.log("[IndexPlugin] Local outlineAutoUpdate is disabled. Skipping.");
+             return;
+        }
+
+        // Check for mismatch
+        const keysToCheck = ["outlineType", "listTypeOutline"];
+        let mismatch = false;
+        for (const key of keysToCheck) {
+            if (localSettings[key] !== settings.get(key)) {
+                console.log(`[IndexPlugin] Outline AutoUpdate Mismatch on ${key}: Local=${localSettings[key]}, Global=${settings.get(key)}`);
+                mismatch = true;
+                break;
+            }
+        }
+
+                if (mismatch) {
+
+                    await new Promise<void>((resolve) => {
+
+                        confirmDialog(i18n.confirmDialog.title, i18n.confirmDialog.content, () => {
+
+                            console.log("[IndexPlugin] User confirmed update to Global (Outline Auto)");
+
+                            resolve();
+
+                        }, () => {
+
+                            console.log("[IndexPlugin] User kept Local settings (Outline Auto)");
+
+                            settings.loadSettingsforOutline(localSettings);
+
+                            resolve();
+
+                        }, i18n.update, i18n.keep);
+
+                    });
+
+                }
+
+         else {
+            settings.loadSettingsforOutline(localSettings);
         }
 
         if (!settings.get("outlineAutoUpdate")) return;

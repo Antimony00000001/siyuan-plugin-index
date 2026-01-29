@@ -7,6 +7,13 @@
   "settings": "设置",
   "cancel": "取消",
   "save": "保存",
+  "confirm": "确定",
+  "update": "更新",
+  "keep": "保持",
+  "confirmDialog": {
+    "title": "配置不匹配",
+    "content": "该目录的配置与全局设置不一致。是否更新该目录以使用全局设置？"
+  },
   "byeMenu": "再见，菜单！",
   "helloPlugin": "你好，插件！",
   "byePlugin": "再见，插件！",

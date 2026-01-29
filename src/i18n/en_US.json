@@ -7,6 +7,13 @@
   "settings": "Settings",
   "cancel": "Cancel",
   "save": "Save",
+  "confirm": "Confirm",
+  "update": "Update",
+  "keep": "Keep",
+  "confirmDialog": {
+    "title": "Settings Mismatch",
+    "content": "The settings for this index differ from your global settings. Do you want to update this index to use global settings?"
+  },
   "byeMenu": "Bye, Menu!",
   "helloPlugin": "Hello, Plugin!",
   "byePlugin": "Bye, Plugin!",

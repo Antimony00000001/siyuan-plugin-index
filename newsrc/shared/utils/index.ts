@@ -1,4 +1,4 @@
-import { getFrontend } from "siyuan";
+import { getFrontend, Dialog } from "siyuan";
 // We might not import the Plugin class here to avoid circular dependency if possible, 
 // but for now we follow the pattern. 
 // However, newsrc structure suggests we should define types in core or shared.
@@ -23,6 +23,31 @@ export function setI18n(_i18n: any) {
 export let plugin: any; // Type as any for now to avoid dependency on legacy code
 export function setPlugin(_plugin: any) {
     plugin = _plugin;
+}
+
+export function confirmDialog(title: string, text: string, confirmCallback: () => void, cancelCallback?: () => void, confirmText?: string, cancelText?: string) {
+    const dialog = new Dialog({
+        title,
+        content: `<div class="b3-dialog__content">
+            <div class="ft__breakword">${text}</div>
+        </div>
+        <div class="b3-dialog__action">
+            <button class="b3-button b3-button--cancel">${cancelText || i18n.cancel}</button>
+            <div class="fn__space"></div>
+            <button class="b3-button b3-button--text">${confirmText || i18n.confirm}</button>
+        </div>`,
+        width: "520px",
+    });
+
+    const btns = dialog.element.querySelectorAll(".b3-button");
+    btns[0].addEventListener("click", () => {
+        dialog.destroy();
+        if (cancelCallback) cancelCallback();
+    });
+    btns[1].addEventListener("click", () => {
+        dialog.destroy();
+        confirmCallback();
+    });
 }
 
 /**
