@@ -44,7 +44,7 @@ export async function insertAction(targetBlockId?: string) {
              console.error("[IndexPlugin] Error parsing settings", e);
          }
 
-         const keysToCheck = ["depth", "listType", "linkType", "fold", "col"];
+         const keysToCheck = ["depth", "listType", "linkType", "fold", "col", "icon"];
          let mismatch = false;
          for (const key of keysToCheck) {
              if (localSettings[key] !== settings.get(key)) {

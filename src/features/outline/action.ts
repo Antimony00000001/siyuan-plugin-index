@@ -32,7 +32,7 @@ export async function insertOutlineAction(targetBlockId?: string) {
              console.error("[IndexPlugin] Error parsing settings", e);
          }
 
-         const keysToCheck = ["outlineType", "listTypeOutline"];
+         const keysToCheck = ["outlineType", "listTypeOutline", "iconOutline"];
          let mismatch = false;
          for (const key of keysToCheck) {
              if (localSettings[key] !== settings.get(key)) {
