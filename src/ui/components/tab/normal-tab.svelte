@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onCreateTemplateButton } from "../../../../legacy/creater/createtemplate";
+    import { onCreateTemplateButton } from "../../../features/template/create-template";
     import { SettingsProperty } from "../../../core/settings";
     import { i18n } from "../../../shared/utils";
     import SettingItem from "../setting-item.svelte";

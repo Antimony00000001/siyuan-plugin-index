@@ -2,11 +2,11 @@
     import { onDestroy } from "svelte";
     import { settings, SettingsProperty } from "../../core/settings";
     import { i18n } from "../../shared/utils";
-    import { eventBus } from "../../../legacy/event/eventbus";
+    import { eventBus } from "../../shared/eventbus";
     import NormalTab from "./tab/normal-tab.svelte";
     import TemplateTab from "./tab/template-tab.svelte";
     import ExtraTab from "./tab/extra-tab.svelte";
-    import { onGetTemplate } from "../../../legacy/creater/createtemplate";
+    import { onGetTemplate } from "../../features/template/create-template";
 
     let settingsStrings = new SettingsProperty();
     settingsStrings.getAll();

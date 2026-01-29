@@ -2,7 +2,7 @@
 import { client, escapeHtml, i18n, isMobile, plugin, sleep } from '../utils';
 import { CONFIG, settings } from '../settings';
 import { IndexQueue, IndexQueueNode } from '../indexnode';
-import { onCreatenbiButton } from './createnotebookindex';
+import { onCreatenbiButton } from '../../src/features/notebook/create-notebook-index';
 
 let indexQueue: IndexQueue;
 

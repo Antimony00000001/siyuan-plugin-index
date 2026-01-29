@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { client, i18n } from "../../../shared/utils";
+    import { client } from "../../../shared/api-client";
+    import { i18n } from "../../../shared/utils";
     import SettingItem from "../setting-item.svelte";
     import { settings } from "../../../core/settings";
 

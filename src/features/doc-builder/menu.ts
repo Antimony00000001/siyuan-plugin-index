@@ -21,8 +21,8 @@ export function buildDoc({ detail }: any) {
     menu.addSeparator();
 
     menu.addItem({
-        icon: "iconUpload",
-        label: "📤 构建子文档",
+        icon: "iconLeft",
+        label: "👈 构建子文档",
         click: () => syncManager(blockId, blockType, "PUSH_TO_DOC")
     });
 

@@ -3,7 +3,7 @@ import { getDocid, i18n, plugin, confirmDialog } from "../../shared/utils";
 import { BlockService, client } from "../../shared/api-client";
 import { IndexQueue } from "../../shared/utils/index-queue";
 import { generateIndex, generateIndexAndOutline, queuePopAll } from "./generator";
-// import { insertNotebookButton } from "../../../legacy/creater/createIndex"; // Legacy import
+import { onCreatenbiButton } from "../notebook/create-notebook-index";
 
 export async function insertAction(targetBlockId?: string) {
     await settings.load();
@@ -13,10 +13,8 @@ export async function insertAction(targetBlockId?: string) {
         await insertIndexAndOutlineAction(targetBlockId);
         return;
     } else if (mode === "notebook") {
-        // Temporary: Call legacy function for Notebook until refactored
-        // Assuming the legacy code is still accessible and working
-        const { insertNotebookButton } = await import("../../../legacy/creater/createIndex");
-        await insertNotebookButton();
+        // Use new notebook feature
+        await onCreatenbiButton();
         return;
     }
 

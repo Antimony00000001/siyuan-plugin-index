@@ -2,7 +2,7 @@
     import TemplateIndexTab from "../template-index-tab.svelte";
     import TemplateNone from "../template-none.svelte";
     import { plugin } from "../../../shared/utils";
-    import { eventBus } from "../../../../legacy/event/eventbus";
+    import { eventBus } from "../../../shared/eventbus";
     import { onMount } from "svelte";
 
     export let tabbarfocus: any;
