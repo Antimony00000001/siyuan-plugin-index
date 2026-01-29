@@ -92,7 +92,7 @@ export async function insertAction(targetBlockId?: string) {
     }
 }
 
-async function insertIndexAndOutlineAction(targetBlockId?: string) {
+export async function insertIndexAndOutlineAction(targetBlockId?: string) {
     let parentId = getDocid();
     if (!parentId) return;
 

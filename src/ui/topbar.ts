@@ -5,6 +5,7 @@ import {
 } from "siyuan";
 import { insertAction } from "../features/index/action";
 import { insertOutlineAction } from "../features/outline/action";
+import { onCreatenbiButton } from "../features/notebook/create-notebook-index";
 import { i18n, isMobile, plugin } from "../shared/utils";
 import SettingsTab from "./components/setting.svelte"
 import { settings } from "../core/settings";
@@ -26,7 +27,7 @@ export async function initTopbar() {
 
     //添加快捷键
     plugin.addCommand({
-        langKey: "addTopBarIcon",
+        langKey: "insertIndex",
         hotkey: "⌥⌘I",
         callback: async () => {
             insertAction();
@@ -128,7 +129,7 @@ function addMenu(rect?: DOMRect) {
     menu.addItem({
         icon: "iconList",
         label: i18n.insertIndex,
-        accelerator: plugin.commands[0].customHotkey,
+        accelerator: "⌥⌘I",
         click: () => {
             insertAction();
         }
@@ -136,7 +137,7 @@ function addMenu(rect?: DOMRect) {
     menu.addItem({
         icon: "iconAlignCenter",
         label: i18n.insertoutline,
-        accelerator: plugin.commands[1].customHotkey,
+        accelerator: "⌥⌘O",
         click: () => {
             insertOutlineAction();
         }
