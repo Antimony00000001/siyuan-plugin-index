@@ -53,8 +53,8 @@ export class BlockService {
                 // If Outline (Blockquote), find inner List to bind attribute
                 if (type == "outline") {
                     console.log(`[BlockService] Outline inserted (ID: ${opId}). Searching for inner list...`);
-                    for (let i = 0; i < 10; i++) {
-                        await sleep(300);
+                    for (let i = 0; i < 15; i++) {
+                        await sleep(500);
                         let childRs = await client.sql({ 
                             stmt: `SELECT id FROM blocks WHERE parent_id = '${opId}' AND type = 'l' LIMIT 1` 
                         });
@@ -99,16 +99,26 @@ export class BlockService {
                 // Re-bind attributes to ensure they persist or update
                 let attrTargetId = updateTargetId;
                 if (type == "outline") {
-                    console.log(`[BlockService] Outline updated. Re-searching for inner list in ${updateTargetId}...`);
-                    for (let i = 0; i < 10; i++) {
-                        await sleep(300);
+                    console.log(`[BlockService] Outline updated. Re-searching for NEW inner list in ${updateTargetId}...`);
+                    let foundNew = false;
+                    for (let i = 0; i < 15; i++) {
+                        await sleep(500);
+                        let stmt = `SELECT id FROM blocks WHERE parent_id = '${updateTargetId}' AND type = 'l' AND id != '${currentId}' LIMIT 1`;
+                        let childRs = await client.sql({ stmt });
+                        if (childRs.data && childRs.data[0]) {
+                            attrTargetId = childRs.data[0].id;
+                            console.log(`[BlockService] Found new inner list for re-binding: ${attrTargetId}`);
+                            foundNew = true;
+                            break;
+                        }
+                    }
+                    if (!foundNew) {
                         let childRs = await client.sql({ 
                             stmt: `SELECT id FROM blocks WHERE parent_id = '${updateTargetId}' AND type = 'l' LIMIT 1` 
                         });
                         if (childRs.data && childRs.data[0]) {
                             attrTargetId = childRs.data[0].id;
-                            console.log(`[BlockService] Found new inner list for re-binding: ${attrTargetId}`);
-                            break;
+                            console.log(`[BlockService] Fallback: using list ID ${attrTargetId}`);
                         }
                     }
                 }
