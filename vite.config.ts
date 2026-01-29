@@ -38,7 +38,7 @@ export default defineConfig({
                     dest: "./",
                 },
                 {
-                    src: "./src/i18n/**",
+                    src: "./legacy/i18n/**",
                     dest: "./i18n/",
                 },
             ],
@@ -84,7 +84,7 @@ export default defineConfig({
                             name: 'watch-external',
                             async buildStart() {
                                 const files = await fg([
-                                    'src/i18n/*.json',
+                                    'legacy/i18n/*.json',
                                     './README*.md',
                                     './plugin.json'
                                 ]);

@@ -1,108 +1,50 @@
-# 📂 当前代码结构与功能详述 (Current Codebase Analysis)
+# 📂 代码库现状总结 (Codebase Status Summary)
 
-## 1. 核心入口与配置 (Core & Config)
+## 🏗️ 架构概览 (Architecture Overview)
 
-*   **`src/index.ts` (Entry Point)**
-    *   **角色**: 插件主类 `IndexPlugin`。
-    *   **职责**:
-        *   生命周期管理 (`onload`, `onunload`)。
-        *   初始化各个模块 (`initTopbar`, `settings`, `eventBus`)。
-        *   注册全局事件监听：
-            *   `click-blockicon` -> `buildDoc` (文档构建器菜单)。
-            *   `loaded-protyle-static` -> `updateIndex` (自动更新目录)。
-*   **`src/settings.ts` (Configuration)**
-    *   **角色**: 全局配置中心。
-    *   **职责**:
-        *   `SettingsProperty` 类：定义所有配置项（depth, listType, autoUpdate, insertionMode 等）。
-        *   `Settings` 类：负责配置的加载、保存、持久化到磁盘。
-*   **`src/topbar.ts` (UI Registration)**
-    *   **职责**:
-        *   注册顶部栏图标。
-        *   注册快捷键命令 (`addCommand`)。
-        *   管理顶部栏右键菜单 (UI 交互)。
-        *   **主要功能入口**:
-            *   `insert()`: 插入目录 (快捷键 `⌥⌘I`)，内部根据 `insertionMode` 分发逻辑。
-            *   `insertDocButton()`: 插入大纲 (快捷键 `⌥⌘O`)。
+代码库已完成全面重构，实现了**全功能迁移**。`legacy/` 目录现已完全退役，仅作为备份保留。所有活跃代码（逻辑、UI、入口）均位于 `src/`。
 
-## 2. 核心业务逻辑 (Business Logic - Creater)
+*   **`src/` (Active Codebase)**: 包含插件的所有功能、UI、设置及核心逻辑。
+*   **`legacy/` (Deprecated Backup)**: 包含旧代码备份，不再被构建或引用。
 
-这是代码最重、逻辑最复杂的部分，主要位于 `src/creater/` 目录。
+## ✅ 完成的重构工作 (Completed Refactoring)
 
-*   **`src/creater/createIndex.ts` (The Monolith - 核心巨石)**
-    *   **核心功能**: 负责生成目录和大纲的 Markdown 文本，并执行插入/更新操作。
-    *   **关键函数**:
-        *   `insert(targetBlockId)`: 顶部栏/斜杠命令入口，根据配置分发到子功能。
-        *   `createIndex(...)`: **递归**生成子文档目录（Index）。支持深度控制、图标处理。
-        *   `insertOutline(...)`: **递归**生成文档大纲（Outline）。处理标题提取、Blockquote 包装 (`> `)。
-        *   `insertData(id, data, type)`: **核心数据持久化函数**。
-            *   负责将生成的 Markdown 写入数据库。
-            *   **智能属性绑定**: 对于 Outline (Blockquote 结构)，它会自动寻找内部的 List 块并绑定 `custom-outline-create` 属性。
-            *   **自动修复**: 更新时如果发现属性错绑在 BQ 上，会自动修复绑定到内部 List。
-            *   **防抖**: 使用 `sleep` 循环重试机制解决 DB 延迟问题。
-        *   `insertAuto` / `insertOutlineAuto`: **自动更新**逻辑。
-            *   检查 `custom-*-create` 属性。
-            *   **智能锚文本保留**: 提取现有 Markdown 中的锚文本，保留用户自定义的分隔符（过滤掉长标题），防止覆盖。
-*   **`src/creater/createnotebookindex.ts` (Notebook Index)**
-    *   **职责**: 生成笔记本级别的目录。
-    *   **逻辑**: 复用了 `createIndex.ts` 中的 `createIndex` 函数，实现了**全笔记本递归**生成。
-    *   **交互**: 包含 `NotebookDialog` 弹窗逻辑。
+1.  **UI 注册迁移 (UI Registration Migration)**
+    *   `legacy/topbar.ts` -> `src/ui/topbar.ts`: 顶部栏按钮注册逻辑已迁移。
+    *   `legacy/slash.ts` -> `src/core/slash.ts`: 斜杠命令注册逻辑已迁移。
 
-## 3. 文档构建器 / 智能列表 (Smart List Sync)
+2.  **事件监听迁移 (Event Listeners Migration)**
+    *   `legacy/event/protyleevent.ts` -> `src/events/protyle-event.ts`: 自动更新监听逻辑已迁移。
+    *   `legacy/event/emojievent.ts` -> `src/events/emoji-event.ts`: Emoji 交互逻辑已迁移。
+    *   `legacy/event/eventbus.ts` -> `src/shared/eventbus.ts`: 事件总线已迁移。
 
-位于 `src/event/` 目录，提供了一套独立的“双向同步”机制。
+3.  **UI 逻辑迁移 (UI Logic Migration)**
+    *   `legacy/creater/createtemplate.ts` -> `src/features/template/create-template.ts`: 模板创建弹窗逻辑已迁移。
+    *   `legacy/creater/createnotebookindex.ts` -> `src/features/notebook/create-notebook-index.ts`: 笔记本目录弹窗逻辑已迁移。
 
-*   **`src/event/process-list.ts` (Menu Handler)**
-    *   **职责**: 监听块菜单点击。
-    *   **功能**: 提供 4 个操作（构建子文档、构建标题行、从子文档拉取、从标题行拉取）。
-    *   **安全机制**: `syncManager` 中包含检查，禁止在自动生成的 Index/Outline 上执行此操作，防止破坏。
-*   **`src/event/process-iblock.ts` (Core Processor)**
-    *   **职责**: 处理单个列表项的具体同步逻辑。
-    *   **逻辑**: 涉及复杂的 Regex 解析，用于在同步内容时保留 Markdown 格式（加粗、颜色等）。
+4.  **入口点完全接管 (Full Entry Point Takeover)**
+    *   `src/index.ts` 现已完全独立，不再引用任何 `legacy` 文件。
+    *   它初始化 `src/shared/utils`，注册 `src` 下的各类功能模块。
 
-## 4. 事件与辅助 (Events & Utils)
+5.  **工具类统一 (Utils Unification)**
+    *   `src/shared/utils/index.ts` 和 `src/shared/api-client/index.ts` 取代了 `legacy/utils.ts`。
+    *   所有新代码（包括 UI 组件）均引用 `src` 下的工具类。
 
-*   **`src/event/protyleevent.ts`**: 处理 `loaded-protyle-static` 事件，触发自动更新 (`updateIndex`)。
-*   **`src/event/emojievent.ts`**: 处理 Alt+Click 点击 Emoji 弹出选择器的逻辑。
-*   **`src/utils.ts`**: 通用工具（`client` 实例、`escapeHtml`、`sleep`）。
-*   **`src/slash.ts`**: 注册斜杠命令（`/index` 等）。
+## 🚀 最终目录结构 (Final Directory Structure)
 
-## 5. UI 组件 (Svelte)
+*   `src/`
+    *   `core/`: 核心模块 (`settings`, `slash`)。
+    *   `events/`: 事件监听 (`protyle-event`, `emoji-event`)。
+    *   `features/`: 业务功能模块 (`index`, `outline`, `notebook`, `doc-builder`, `template`)。
+    *   `shared/`: 共享工具 (`utils`, `api-client`, `eventbus`)。
+    *   `ui/`: UI 组件与逻辑 (`components`, `topbar`)。
+    *   `index.ts`: **插件主入口**。
+*   `legacy/` (备份，无活跃引用)
+    *   `creater/`: 旧 `createIndex.ts` 等。
+    *   `components/`: (已移动至 `src/ui`)
+    *   `index.ts`: 旧入口。
+    *   `settings.ts`: (曾作为重定向，现已无引用)。
 
-位于 `src/components/`，负责设置界面渲染。
-*   `setting.svelte` / `tab/*.svelte`: 设置面板结构。
-*   `template-index-tab.svelte`: 包含“插入模式 (Insertion Mode)”等核心配置。
-*   `dialog/notebook-dialog.svelte`: 插入笔记本目录的配置弹窗。
+## 🏁 结论 (Conclusion)
 
----
-
-## 🆕 重构架构 (Refactored Structure - `newsrc/`)
-
-正在开发中的新一代模块化架构，旨在解决 `src/creater/createIndex.ts` 的巨石问题，实现更好的关注点分离。
-
-### 1. 核心层 (`newsrc/core`)
-*   **`settings/index.ts`**: 集中式的配置管理模块。
-
-### 2. 功能层 (`newsrc/features`)
-业务逻辑按功能特性拆分。
-*   **`doc-builder/`**: 文档构建器功能（原 Smart List Sync）。
-    *   `builder.ts`: 构建逻辑核心。
-    *   `menu.ts`: 菜单交互逻辑。
-    *   `processor.ts`: 列表与块的处理逻辑。
-*   **`index/`**: 目录生成功能。
-    *   `action.ts`: 用户交互动作（插入、更新）。
-    *   `generator.ts`: Markdown 目录生成算法。
-*   **`outline/`**: 大纲生成功能。
-    *   `action.ts`: 用户交互动作。
-    *   `generator.ts`: 大纲生成逻辑（标题提取等）。
-
-### 3. 共享层 (`newsrc/shared`)
-通用的工具与底层服务。
-*   **`api-client/`**: 封装与思源笔记 API 的交互。
-    *   `index.ts`: 核心 API 客户端。
-    *   `query.ts`: SQL 查询相关封装。
-*   **`utils/`**: 通用工具库。
-    *   `icon-utils.ts`: 图标处理（Unicode Hex/Emoji/Default 逻辑）。
-    *   `markdown-utils.ts`: Markdown 格式化与解析工具。
-    *   `anchor-utils.ts`: 锚文本处理与保留逻辑。
-    *   `index-queue.ts`: 索引操作队列，防止并发冲突。
-    *   `index.ts`: 其他通用工具。
+重构任务圆满完成。插件现在拥有一个清晰、模块化的架构，且完全脱离了旧代码的依赖。`legacy` 目录可随时安全删除（目前保留作备份）。

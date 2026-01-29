@@ -1,17 +1,18 @@
 import { Plugin } from "siyuan";
-import { setI18n, setPlugin } from "./shared/utils";
-import { createDialog, initTopbar } from "./ui/topbar";
-import { settings } from "./core/settings";
-import { buildDoc as buildDocNew } from "./features/doc-builder/menu";
-import { updateIndex } from "./events/protyle-event";
-import { initEmojiEvent, removeEmojiEvent } from "./events/emoji-event";
-import { addSlash } from "./core/slash";
+import { setI18n, setPlugin } from "./utils";
+import { setI18n as setNewI18n, setPlugin as setNewPlugin } from "../src/shared/utils/index";
+import { createDialog, initTopbar } from "./topbar";
+import { settings } from "./settings";
+import { buildDoc as buildDocNew } from "../src/features/doc-builder/menu";
+import { updateIndex } from "./event/protyleevent";
+import { initEmojiEvent, removeEmojiEvent } from "./event/emojievent";
+import { addSlash } from "./slash";
 
 export default class IndexPlugin extends Plugin {
 
     //加载插件
     async onload() {
-        console.log("IndexPlugin onload v1.7.1-Refactor (Src Entry)");
+        console.log("IndexPlugin onload v1.7.1-Refactor");
         this.init();
         await initTopbar();
         // await this.initSettings();
@@ -38,6 +39,8 @@ export default class IndexPlugin extends Plugin {
     init(){
         setI18n(this.i18n);
         setPlugin(this);
+        setNewI18n(this.i18n);
+        setNewPlugin(this);
         addSlash();
         // console.log(this.getOpenedTab());
     }

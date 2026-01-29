@@ -43,7 +43,7 @@
         "src/**/*.d.ts",
         "src/**/*.tsx",
         "src/**/*.vue",
-        "newsrc/**/*.ts"
+        "legacy/**/*.ts"
     ],
     "references": [
         {
