@@ -18,6 +18,8 @@ export class SettingsProperty {
     listTypeNotebook: string;
     linkTypeNotebook: string;
     iconNotebook: boolean;
+    icon: boolean;
+    iconOutline: boolean;
 
     constructor(){
         this.depth = 0;
@@ -35,6 +37,8 @@ export class SettingsProperty {
         this.listTypeNotebook = "unordered";
         this.linkTypeNotebook = "ref";
         this.iconNotebook = true;
+        this.icon = false;
+        this.iconOutline = false;
     }
 
     getAll(){
@@ -56,6 +60,8 @@ export class SettingsProperty {
         this.listTypeNotebook = settings.get("listTypeNotebook") ?? "unordered";
         this.linkTypeNotebook = settings.get("linkTypeNotebook") ?? "ref";
         this.iconNotebook = settings.get("iconNotebook") ?? true;
+        this.icon = settings.get("icon") ?? false;
+        this.iconOutline = settings.get("iconOutline") ?? false;
     }
 }
 
@@ -93,6 +99,7 @@ class Settings {
         this.set("col", data.col ?? def.col);
         this.set("autoUpdate", data.autoUpdate ?? def.autoUpdate);
         this.set("insertionMode", data.insertionMode ?? def.insertionMode);
+        this.set("icon", data.icon ?? def.icon);
     }
 
     loadSettingsforOutline(data: any){
@@ -100,6 +107,7 @@ class Settings {
         this.set("outlineType", data.outlineType ?? def.outlineType);
         this.set("outlineAutoUpdate", data.outlineAutoUpdate ?? def.outlineAutoUpdate);
         this.set("listTypeOutline", data.listTypeOutline ?? def.listTypeOutline);
+        this.set("iconOutline", data.iconOutline ?? def.iconOutline);
     }
 }
 

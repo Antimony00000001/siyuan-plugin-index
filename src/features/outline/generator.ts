@@ -55,19 +55,45 @@ export function generateOutlineMarkdown(outlineData: any[], tab: number, stab: n
 
         data += indent + listMarker;
 
-        let outlineType = settings.get("outlineType") == "copy" ? true : false;
+        let outlineType = settings.get("outlineType"); // "copy", "ref", "embed" -> actually stored as string in settings usually?
+        // SettingsProperty defines outlineType as string. "ref", "embed", "copy".
+        
         let ialStr = ial ? `\n${indent}   {: ${ial}}` : "";
 
-        if (outlineType) {
+        if (outlineType == "copy") {
             data += `${name}((${id} '*'))${ialStr}\n`;
         } else {
-            outlineType = settings.get("outlineType") == "ref" ? true : false;
-            let anchorText = existingAnchors?.get(id) || "➖";
-            if (outlineType) {
-                data += `[${anchorText}](siyuan://blocks/${id}) ${name}${ialStr}\n`;
-            } else {
-                let safeAnchorText = anchorText.replace(/"/g, "&quot;");
-                data += `((${id} "${safeAnchorText}")) ${name}${ialStr}\n`;
+            let iconEnabled = settings.get("iconOutline") ?? false;
+            let anchorText = existingAnchors?.get(id);
+
+            // If icons disabled, ignore default separator
+            if (!iconEnabled && anchorText === "➖") {
+                anchorText = undefined;
+            }
+
+            if (!anchorText) {
+                if (iconEnabled) {
+                    anchorText = "➖";
+                } else {
+                    anchorText = name;
+                }
+            }
+
+            let isAnchorName = (anchorText === name);
+            let safeAnchorText = anchorText.replace(/"/g, "&quot;");
+
+            if (outlineType == "ref") { // Link
+                if (isAnchorName) {
+                    data += `[${anchorText}](siyuan://blocks/${id})${ialStr}\n`;
+                } else {
+                    data += `[${anchorText}](siyuan://blocks/${id}) ${name}${ialStr}\n`;
+                }
+            } else { // Block Ref (Embed/Static Ref)
+                if (isAnchorName) {
+                    data += `((${id} "${safeAnchorText}"))${ialStr}\n`;
+                } else {
+                    data += `((${id} "${safeAnchorText}")) ${name}${ialStr}\n`;
+                }
             }
         }
         

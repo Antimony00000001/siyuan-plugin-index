@@ -32,6 +32,12 @@
         settingValue={settingsStrings.linkType}
     />
     <SettingItem
+        type="switch"
+        content={i18n.settingsTab.items.icon}
+        settingKey="icon"
+        settingValue={settingsStrings.icon}
+    />
+    <SettingItem
         type="range"
         content={i18n.settingsTab.items.depth}
         settingKey="depth"

@@ -17,7 +17,7 @@ export async function generateIndex(notebook: any, ppath: any, pitem: IndexQueue
     const depth = config?.depth !== undefined ? config.depth : settings.get("depth");
     const listTypeSetting = config?.listType !== undefined ? config.listType : settings.get("listType");
     const linkTypeSetting = config?.linkType !== undefined ? config.linkType : settings.get("linkType");
-    const iconEnabled = config?.icon !== undefined ? config.icon : true;
+    const iconEnabled = config?.icon !== undefined ? config.icon : (settings.get("icon") ?? false);
 
     if (depth == 0 || depth > tab) {
         let docs;
@@ -60,8 +60,13 @@ export async function generateIndex(notebook: any, ppath: any, pitem: IndexQueue
             if (linkType) {
                 data += `${iconStr ? iconStr + ' ' : ''}[${name}](siyuan://blocks/${id})\n`;
             } else {
-                let safeIconStr = iconStr.replace(/"/g, "&quot;");
-                data += `((${id} "${safeIconStr}")) ${name}\n`;
+                if (iconEnabled && iconStr) {
+                    let safeIconStr = iconStr.replace(/"/g, "&quot;");
+                    data += `((${id} "${safeIconStr}")) ${name}\n`;
+                } else {
+                    let safeName = name.replace(/"/g, "&quot;");
+                    data += `((${id} "${safeName}"))\n`;
+                }
             }
 
             let item = new IndexQueueNode(tab, data);
@@ -77,7 +82,7 @@ export async function generateIndexAndOutline(notebook: any, ppath: any, pitem: 
     const depth = config?.depth !== undefined ? config.depth : settings.get("depth");
     const listTypeSetting = config?.listType !== undefined ? config.listType : settings.get("listType");
     const linkTypeSetting = config?.linkType !== undefined ? config.linkType : settings.get("linkType");
-    const iconEnabled = config?.icon !== undefined ? config.icon : true;
+    const iconEnabled = config?.icon !== undefined ? config.icon : (settings.get("icon") ?? false);
 
     if (depth == 0 || depth > tab) {
         let docs;
@@ -122,8 +127,13 @@ export async function generateIndexAndOutline(notebook: any, ppath: any, pitem: 
                 if (linkType) {
                     data += `${iconStr ? iconStr + ' ' : ''}[${name}](siyuan://blocks/${id})\n`;
                 } else {
-                    let safeIconStr = iconStr.replace(/"/g, "&quot;");
-                    data += `((${id} "${safeIconStr}")) ${name}\n`;
+                    if (iconEnabled && iconStr) {
+                        let safeIconStr = iconStr.replace(/"/g, "&quot;");
+                        data += `((${id} "${safeIconStr}")) ${name}\n`;
+                    } else {
+                        let safeName = name.replace(/"/g, "&quot;");
+                        data += `((${id} "${safeName}"))\n`;
+                    }
                 }
                 
                 let outlineData = await requestGetDocOutline(id);

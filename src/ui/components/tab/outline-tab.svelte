@@ -27,6 +27,12 @@
     />
     <SettingItem
         type="switch"
+        content={i18n.settingsTab.items.icon}
+        settingKey="iconOutline"
+        settingValue={settingsStrings.iconOutline}
+    />
+    <SettingItem
+        type="switch"
         content={i18n.settingsTab.items.outlineAutoUpdate}
         settingKey="outlineAutoUpdate"
         settingValue={settingsStrings.outlineAutoUpdate}
