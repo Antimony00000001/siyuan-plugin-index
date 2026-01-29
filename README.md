@@ -16,6 +16,17 @@ Right click on the plugin icon, show more actions
 
 `CTRL + ALT + N`Insert notebook Index
 
+# Version 1.8.0 (Major Update)
+
+- **Removed Template Feature**: Legacy template system is removed. Now you can update configurations simply by re-inserting into an existing index/outline.
+- **UI Overhaul**: Integrated "Notebook Index" and "Sub-page Index + Outline" into the main Index settings. Redesigned the settings panel with horizontal tabs (Index, Outline, Builder).
+- **Icon System Optimization**: 
+    - Added optional icons for Index and Outline (disabled by default).
+    - For Outlines: Rich text sync is supported when icons are enabled; plain text sync is used when disabled to ensure link stability.
+- **Emoji Picker**: Alt + Click on SiYuan's built-in emojis to pick and replace them.
+- **Builder Improvements**: Removed the "Pull" functionality for a leaner experience.
+- **Icon Support Optimization**: Non-built-in icons are now displayed as standard SiYuan icons to prevent mojibake.
+
 # Changelog
 
 [CHANGELOG](https://github.com/TinkMingKing/siyuan-plugins-index/blob/main/CHANGELOG.md)
