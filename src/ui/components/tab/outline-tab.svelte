@@ -27,7 +27,7 @@
     />
     <SettingItem
         type="switch"
-        content={i18n.settingsTab.items.icon}
+        content={i18n.settingsTab.items.iconOutline}
         settingKey="iconOutline"
         settingValue={settingsStrings.iconOutline}
     />

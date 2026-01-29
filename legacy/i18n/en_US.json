@@ -69,6 +69,10 @@
       },
       "icon": {
         "title": "Icon",
+        "content":"Set whether to display icons when inserting."
+      },
+      "iconOutline": {
+        "title": "Icon",
         "content":"Set whether to display icons when inserting. <br><span style='color: blue;'>Note: Please enable this if you want to synchronize formatting within titles.</span>"
       },
       "autoUpdate": {
@@ -89,6 +93,15 @@
         "options": {
             "ref": "Link",
             "embed": "Embed"
+        }
+      },
+      "insertionMode": {
+        "title": "Insertion Content",
+        "content": "Set the content when clicking 'Insert Index'",
+        "options": {
+          "index": "Sub-document Index",
+          "notebook": "Notebook Index",
+          "index_outline": "Sub-document Index and Outline"
         }
       },
       "builder": {
