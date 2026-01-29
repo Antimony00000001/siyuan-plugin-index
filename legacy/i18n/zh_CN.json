@@ -36,6 +36,7 @@
   "generalSettings": "常规设置",
   "indexSettings": "目录设置",
   "outlineSettings": "大纲设置",
+  "builderSettings": "构建器设置",
   "templateSettings": "模板设置",
   "extraSettings": "拓展功能",
   "independentInsert": "独立插入",
@@ -43,7 +44,6 @@
   "cliketoAdd": "点击前往添加模板",
   "loading": "加载中……",
   "settingsTab": {
-    "name": "设置",
     "items": {
       "depth": {
         "title": "目录索引深度",

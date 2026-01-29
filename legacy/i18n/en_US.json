@@ -36,6 +36,7 @@
   "generalSettings":"General Settings",
   "indexSettings": "Index Settings",
   "outlineSettings": "Outline Settings",
+  "builderSettings": "Builder Settings",
   "templateSettings":"Template Settings",
   "extraSettings":"Extra Settings",
   "independentInsert":"Independent Insert",
@@ -43,7 +44,6 @@
   "cliketoAdd":"Click to add a template",
   "loading": "Loading……",
   "settingsTab": {
-    "name":"Settings",
     "items": {
       "depth": {
         "title": "Index depth",

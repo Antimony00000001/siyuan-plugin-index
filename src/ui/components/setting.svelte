@@ -61,7 +61,7 @@
         >
             <span class="fn__flex-1"></span>
             <span class="item__icon"><svg><use xlink:href="#iconSQL" /></svg></span>
-            <span class="item__text">{i18n.settingsTab.items.builder.title}</span>
+            <span class="item__text">{i18n.builderSettings}</span>
             <span class="fn__flex-1"></span>
         </div>
     </div>
