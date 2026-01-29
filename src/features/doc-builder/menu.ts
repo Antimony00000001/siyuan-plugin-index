@@ -27,7 +27,7 @@ export function buildDoc({ detail }: any) {
     });
 
     menu.addItem({
-        icon: "iconDownload",
+        icon: "iconDown",
         label: "👇 构建标题行",
         click: () => syncManager(blockId, blockType, "PUSH_TO_BOTTOM")
     });
