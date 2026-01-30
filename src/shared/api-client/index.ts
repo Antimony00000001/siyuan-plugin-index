@@ -48,6 +48,23 @@ export class BlockService {
             if (currentId == undefined) {
                 // === Case: Insert New ===
                 console.log(`[BlockService] No existing ${type} found. Inserting new.`);
+
+                // Check for empty document (single empty P block)
+                let emptyBlockId: string | undefined;
+                if (!targetBlockId) {
+                    let checkRs = await client.sql({
+                        stmt: `SELECT id, type, content FROM blocks WHERE root_id = '${rootId}' AND parent_id = '${rootId}' ORDER BY sort ASC`
+                    });
+                    if (checkRs.data && checkRs.data.length === 1) {
+                        const b = checkRs.data[0];
+                        // content can be empty string for empty P block
+                        if (b.type === 'p' && (!b.content || b.content.trim() === '')) {
+                            emptyBlockId = b.id;
+                            console.log(`[BlockService] Found empty initial block: ${emptyBlockId}. Will remove after insertion.`);
+                        }
+                    }
+                }
+
                 let result;
                 if (targetBlockId) {
                     result = await client.updateBlock({
@@ -87,6 +104,11 @@ export class BlockService {
                     id: attrTargetId
                 });
                 
+                // Remove empty block if identified
+                if (emptyBlockId) {
+                     await client.deleteBlock({ id: emptyBlockId });
+                }
+
                 console.log(`[BlockService] Attributes bound to ${attrTargetId}`);
                 return { success: true, msg: "insert_success" };
 
