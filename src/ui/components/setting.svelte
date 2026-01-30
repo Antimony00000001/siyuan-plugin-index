@@ -19,7 +19,6 @@
     eventBus.on("switchTab", switchTab);
 
     async function updateSettings() {
-        await settings.load();
         settingsStrings.getAll();
         settingsStrings = settingsStrings; // Trigger reactivity
     }

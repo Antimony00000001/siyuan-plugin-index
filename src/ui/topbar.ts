@@ -106,8 +106,6 @@ export async function initTopbar() {
 
 export async function createDialog() {
     //载入配置
-    await settings.load();
-
     const settingsDialog = "index-settings"
 
     const dialog = new Dialog({

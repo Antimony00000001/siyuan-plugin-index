@@ -42,8 +42,6 @@ function getNotebookDialog() {
 async function onCreate(dialog: Dialog) {
 
     //载入配置
-    await settings.load();
-
     //寻找当前编辑的文档的id
     let parentId = getDocid();
     if (parentId == null) {

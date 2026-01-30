@@ -40,6 +40,10 @@ export default class IndexPlugin extends Plugin {
         });
     }
 
+    onDataChanged() {
+        settings.load();
+    }
+
     //获取i18n和插件类实例
     init(){
         setI18n(this.i18n);
