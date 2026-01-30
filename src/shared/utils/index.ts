@@ -83,8 +83,13 @@ export function getAttrFromIAL(ial: string, attrName: string): string | null {
     const regex = new RegExp(`${attrName}="([^"]*)"`);
     const match = ial.match(regex);
     if (match && match[1]) {
-        // Unescape &quot; to "
-        return match[1].replace(/&quot;/g, '"');
+        return decodeHtml(match[1]);
     }
     return null;
+}
+
+export function decodeHtml(html: string) {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
 }

@@ -6,12 +6,13 @@ import { buildDoc as buildDocNew } from "./features/doc-builder/menu";
 import { updateIndex } from "./events/protyle-event";
 import { initEmojiEvent, removeEmojiEvent } from "./events/emoji-event";
 import { addSlash } from "./core/slash";
+import { version } from "../plugin.json";
 
 export default class IndexPlugin extends Plugin {
 
     //加载插件
     async onload() {
-        console.log(`IndexPlugin onload v${this.version}`);
+        console.log(`IndexPlugin onload v${version}`);
         this.init();
         await initTopbar();
         // await this.initSettings();
