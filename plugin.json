@@ -1,9 +1,9 @@
 {
   "name": "siyuan-plugins-index",
-  "author": "Szerelem617",
-  "url": "https://github.com/Szerelem617/siyuan-plugins-index",
+  "author": "Sezrelem0617",
+  "url": "https://github.com/Sezrelem0617/siyuan-plugins-index",
   "version": "1.8.3",
-  "minAppVersion": "2.10.12",
+  "minAppVersion": "3.0.0",
   "backends": ["all"],
   "frontends": ["all"],
   "displayName": {
@@ -17,15 +17,6 @@
   "readme": {
     "default": "README.md",
     "zh_CN": "README_zh_CN.md"
-  },
-  "i18n": [
-    "en_US",
-    "zh_CN"
-  ],
-  "funding": {
-    "openCollective": "",
-    "patreon": "",
-    "github": ""
   },
   "keywords": [
     "index", "目录"

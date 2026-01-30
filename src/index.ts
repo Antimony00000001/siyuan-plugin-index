@@ -1,7 +1,7 @@
 import { Plugin } from "siyuan";
 import { setI18n, setPlugin } from "./shared/utils";
 import { createDialog, initTopbar } from "./ui/topbar";
-import { settings } from "./core/settings";
+import { settings, CONFIG } from "./core/settings";
 import { buildDoc as buildDocNew } from "./features/doc-builder/menu";
 import { updateIndex } from "./events/protyle-event";
 import { initEmojiEvent, removeEmojiEvent } from "./events/emoji-event";
@@ -32,6 +32,12 @@ export default class IndexPlugin extends Plugin {
         this.eventBus.off("loaded-protyle-static", updateIndex);
         removeEmojiEvent();
         console.log("IndexPlugin onunload");
+    }
+
+    uninstall() {
+        this.removeData(CONFIG).catch(e => {
+            console.error(`Uninstall [${this.name}] remove data [${CONFIG}] fail: ${e.message}`);
+        });
     }
 
     //获取i18n和插件类实例

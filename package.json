@@ -2,11 +2,14 @@
   "name": "siyuan-plugins-index",
   "version": "1.8.3",
   "type": "module",
-  "description": "",
-  "repository": "",
-  "homepage": "",
-  "author": "",
-  "license": "GPL-3.0",
+  "description": "One click insert a index list in document",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sezrelem0617/siyuan-plugins-index.git"
+  },
+  "homepage": "https://github.com/Sezrelem0617/siyuan-plugins-index",
+  "author": "Sezrelem0617",
+  "license": "MIT",
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "dev": "vite build --watch",
