@@ -1,4 +1,4 @@
-[English](https://github.com/Sezrelem0617/siyuan-plugins-index/blob/main/README.md)
+[English](https://github.com/Szerelem0617/siyuan-plugins-index/blob/main/README.md)
 
 # 目录插件
 
@@ -25,4 +25,4 @@
 
 # 更新日志
 
-[CHANGELOG](https://github.com/Sezrelem0617/siyuan-plugins-index/blob/main/CHANGELOG.md)
+[CHANGELOG](https://github.com/Szerelem0617/siyuan-plugins-index/blob/main/CHANGELOG.md)

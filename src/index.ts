@@ -11,7 +11,7 @@ export default class IndexPlugin extends Plugin {
 
     //加载插件
     async onload() {
-        console.log("IndexPlugin onload v1.7.1-Refactor (Src Entry)");
+        console.log(`IndexPlugin onload v${this.version}`);
         this.init();
         await initTopbar();
         // await this.initSettings();

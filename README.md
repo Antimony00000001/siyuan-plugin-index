@@ -1,4 +1,4 @@
-[中文](https://github.com/Sezrelem0617/siyuan-plugins-index/blob/main/README_zh_CN.md)
+[中文](https://github.com/Szerelem0617/siyuan-plugins-index/blob/main/README_zh_CN.md)
 
 # Index Plugin
 
@@ -25,4 +25,4 @@ Right click on the plugin icon, show more actions
 
 # Changelog
 
-[CHANGELOG](https://github.com/Sezrelem0617/siyuan-plugins-index/blob/main/CHANGELOG.md)
+[CHANGELOG](https://github.com/Szerelem0617/siyuan-plugins-index/blob/main/CHANGELOG.md)
