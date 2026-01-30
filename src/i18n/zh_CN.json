@@ -1,0 +1,117 @@
+{
+  "insertIndex": "插入目录",
+  "insertoutline": "插入大纲",
+  "settings": "设置",
+  "addTopBarIcon": "目录/大纲",
+  "indexSettings": "目录设置",
+  "outlineSettings": "大纲设置",
+  "builderSettings": "构建器设置",
+  "cancel": "取消",
+  "confirm": "确定",
+  "update": "更新",
+  "keep": "保持",
+  "recent": "最近使用",
+  "search": "搜索",
+  "loading": "加载中",
+  "msg_success": "操作成功",
+  "errorMsg_empty": "当前文档ID为空",
+  "errorMsg_miss": "操作失败",
+  "confirmDialog": {
+    "title": "配置冲突",
+    "content": "检测到本地配置与全局配置不一致，是否更新为全局配置？"
+  },
+  "settingsTab": {
+    "name": "插件设置",
+    "items": {
+      "notebookDialog": {
+        "title": "笔记本目录",
+        "content": "选择笔记本以生成目录索引",
+        "dialogtitle": "生成笔记本目录",
+        "insert": "插入"
+      },
+      "listType": {
+        "title": "列表类型",
+        "content": "选择生成目录的列表样式",
+        "options": {
+          "unordered": "无序列表",
+          "ordered": "有序列表"
+        }
+      },
+      "linkType": {
+        "title": "链接类型",
+        "content": "选择生成目录的链接样式",
+        "options": {
+          "ref": "链接引用",
+          "embed": "嵌入块"
+        }
+      },
+      "icon": {
+        "title": "显示图标",
+        "content": "是否在目录中显示文档图标"
+      },
+      "depth": {
+        "title": "目录深度",
+        "content": "生成目录的最大深度 (0为无限)",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "fold": {
+        "title": "折叠层级",
+        "content": "默认折叠的层级深度",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "col": {
+        "title": "分栏数量",
+        "content": "目录显示的分栏数列数",
+        "min": 1,
+        "max": 5,
+        "step": 1
+      },
+      "insertionMode": {
+        "title": "插入模式",
+        "content": "选择默认的插入行为",
+        "options": {
+          "index": "仅目录",
+          "index_outline": "目录+大纲",
+          "notebook": "笔记本目录"
+        }
+      },
+      "autoUpdate": {
+        "title": "自动更新",
+        "content": "文档加载时是否自动更新目录"
+      },
+      "listTypeOutline": {
+        "title": "大纲列表类型",
+        "content": "选择生成大纲的列表样式",
+        "options": {
+          "unordered": "无序列表",
+          "ordered": "有序列表"
+        }
+      },
+      "outlineType": {
+        "title": "大纲类型",
+        "content": "选择大纲的生成方式",
+        "options": {
+          "copy": "复制",
+          "ref": "引用",
+          "embed": "嵌入"
+        }
+      },
+      "iconOutline": {
+        "title": "大纲图标",
+        "content": "是否在大纲中显示图标"
+      },
+      "outlineAutoUpdate": {
+        "title": "大纲自动更新",
+        "content": "文档加载时是否自动更新大纲"
+      },
+      "builder": {
+        "title": "文档构建器",
+        "content": "启用文档构建器功能"
+      }
+    }
+  }
+}

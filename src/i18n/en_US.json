@@ -1,0 +1,117 @@
+{
+  "insertIndex": "Insert Index",
+  "insertoutline": "Insert Outline",
+  "settings": "Settings",
+  "addTopBarIcon": "Index/Outline",
+  "indexSettings": "Index Settings",
+  "outlineSettings": "Outline Settings",
+  "builderSettings": "Builder Settings",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "update": "Update",
+  "keep": "Keep",
+  "recent": "Recent",
+  "search": "Search",
+  "loading": "Loading",
+  "msg_success": "Success",
+  "errorMsg_empty": "Document ID is empty",
+  "errorMsg_miss": "Operation failed",
+  "confirmDialog": {
+    "title": "Configuration Conflict",
+    "content": "Local configuration mismatch detected. Update to global settings?"
+  },
+  "settingsTab": {
+    "name": "Plugin Settings",
+    "items": {
+      "notebookDialog": {
+        "title": "Notebook Index",
+        "content": "Select a notebook to generate index",
+        "dialogtitle": "Generate Notebook Index",
+        "insert": "Insert"
+      },
+      "listType": {
+        "title": "List Type",
+        "content": "List style for the index",
+        "options": {
+          "unordered": "Unordered",
+          "ordered": "Ordered"
+        }
+      },
+      "linkType": {
+        "title": "Link Type",
+        "content": "Link style for the index",
+        "options": {
+          "ref": "Reference",
+          "embed": "Embed"
+        }
+      },
+      "icon": {
+        "title": "Show Icon",
+        "content": "Show document icons in index"
+      },
+      "depth": {
+        "title": "Depth",
+        "content": "Max depth for index (0 for infinite)",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "fold": {
+        "title": "Fold Level",
+        "content": "Default fold level depth",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "col": {
+        "title": "Columns",
+        "content": "Number of columns for index display",
+        "min": 1,
+        "max": 5,
+        "step": 1
+      },
+      "insertionMode": {
+        "title": "Insertion Mode",
+        "content": "Default insertion behavior",
+        "options": {
+          "index": "Index Only",
+          "index_outline": "Index + Outline",
+          "notebook": "Notebook Index"
+        }
+      },
+      "autoUpdate": {
+        "title": "Auto Update",
+        "content": "Auto update index on doc load"
+      },
+      "listTypeOutline": {
+        "title": "Outline List Type",
+        "content": "List style for the outline",
+        "options": {
+          "unordered": "Unordered",
+          "ordered": "Ordered"
+        }
+      },
+      "outlineType": {
+        "title": "Outline Type",
+        "content": "Generation method for outline",
+        "options": {
+          "copy": "Copy",
+          "ref": "Reference",
+          "embed": "Embed"
+        }
+      },
+      "iconOutline": {
+        "title": "Outline Icon",
+        "content": "Show icons in outline"
+      },
+      "outlineAutoUpdate": {
+        "title": "Outline Auto Update",
+        "content": "Auto update outline on doc load"
+      },
+      "builder": {
+        "title": "Doc Builder",
+        "content": "Enable Document Builder feature"
+      }
+    }
+  }
+}
