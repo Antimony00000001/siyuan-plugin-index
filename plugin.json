@@ -2,8 +2,8 @@
   "name": "siyuan-plugins-index",
   "author": "Sezrelem0617",
   "url": "https://github.com/Sezrelem0617/siyuan-plugins-index",
-  "version": "1.8.3",
-  "minAppVersion": "3.0.0",
+  "version": "1.8.4",
+  "minAppVersion": "3.3.0",
   "backends": ["all"],
   "frontends": ["all"],
   "displayName": {
