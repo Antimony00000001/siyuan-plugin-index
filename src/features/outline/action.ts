@@ -78,6 +78,7 @@ export async function insertOutlineAction(targetBlockId?: string) {
         // BlockService didn't push msg in my implementation (I commented it out or returned status).
         // I should push msg here.
     } else {
+        client.pushMsg({ msg: i18n.msg_no_outline, timeout: 3000 });
         // error
     }
 }

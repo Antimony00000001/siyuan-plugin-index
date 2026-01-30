@@ -88,6 +88,7 @@ export async function insertAction(targetBlockId?: string) {
         );
         // client.pushMsg({ msg: i18n.msg_success });
     } else {
+        client.pushMsg({ msg: i18n.msg_no_index, timeout: 3000 });
         // client.pushErrMsg
     }
 }
@@ -116,6 +117,8 @@ export async function insertIndexAndOutlineAction(targetBlockId?: string) {
              await client.prependBlock({ data: data, dataType: "markdown", parentID: parentId });
         }
         // client.pushMsg({ msg: i18n.msg_success });
+    } else {
+        client.pushMsg({ msg: i18n.msg_no_index, timeout: 3000 });
     }
 }
 

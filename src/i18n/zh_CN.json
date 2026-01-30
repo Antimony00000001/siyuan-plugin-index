@@ -14,6 +14,8 @@
   "search": "搜索",
   "loading": "加载中",
   "msg_success": "操作成功",
+  "msg_no_index": "当前文档无子文档",
+  "msg_no_outline": "当前文档内无标题行",
   "errorMsg_empty": "当前文档ID为空",
   "errorMsg_miss": "操作失败",
   "confirmDialog": {
