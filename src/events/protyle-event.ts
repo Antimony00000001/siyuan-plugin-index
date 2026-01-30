@@ -51,6 +51,10 @@ export async function updateIndex({ detail }: any) {
     }
 
     // 自动插入
-    autoUpdateIndex(notebookId, path, parentId, indexBlock);
-    autoUpdateOutline(parentId, outlineBlock);
+    if (indexBlock) {
+        autoUpdateIndex(notebookId, path, parentId, indexBlock);
+    }
+    if (outlineBlock) {
+        autoUpdateOutline(parentId, outlineBlock);
+    }
 }

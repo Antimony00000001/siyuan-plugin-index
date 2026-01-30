@@ -1,75 +1,38 @@
-│ 19 + # 1.8.0 版本 (主要更新)                                                                                                                      │
-│ 20                                                                                                                                                │
-│ 21                                                                                  │
-│ 22 + - **移出模板功能**: 移除了旧的模板功能。现在可以通过再次点击插入目录/大纲来更新配置。 │
-│ 23 + - **UI更新**: 转移了插入笔记本目录和插入子页面目录和大纲功能，可以在目录设置里选择。设置面板重构为三列横向标签页（目录、大纲、构建器）                                                 │
-│ 24 + - **图标系统优化**:                                                                                                                          │
-│ 25 +     - 目录与大纲支持可选图标（默认关闭）。                                                                                                   │
-│ 26 +     - 针对大纲：开启图标时支持富文本同步，关闭图标时仅同步纯文本以保证链接稳定性。                                                           │
-│ 27 + - **加入表情选择器**: Alt + 点击 思源内置表情，可以选择表情进行更换                                                                  │
-│ 28 + - **文档构建器优化**: 移出了拉取功能                                                                                     │
-│ 29 + - **图标支持优化**: 非自带图标显示为思源自带图标，不会显示乱码
+# Codebase Optimization Analysis
 
-# 1.8.3 性能与逻辑深度优化总结
+## Current Status
+- **File**: `src/events/protyle-event.ts`
+- **Function**: `updateIndex` triggered by `loaded-protyle-static`.
+- **Logic**: 
+  1. Performs 1 combined SQL query to check for both Index and Outline blocks.
+  2. Calls `autoUpdateIndex(..., indexBlock)` regardless of whether `indexBlock` was found.
+  3. Calls `autoUpdateOutline(..., outlineBlock)` regardless of whether `outlineBlock` was found.
 
-此次更新 **完全达到并超越了预期效果**，通过底层架构的重构实现了显著的性能提升和逻辑闭环：
+## The Issue (3 Queries in "Empty" Scenario)
+When a document has **neither** an index nor an outline:
+1. `updateIndex` executes Query #1 (Combined). Result: Empty.
+2. `autoUpdateIndex` is called with `null`. It executes Query #2 (Fallback check). Result: Empty.
+3. `autoUpdateOutline` is called with `null`. It executes Query #3 (Fallback check). Result: Empty.
 
-1.  **性能质的飞跃 (SQL查询从 4+ 次降至 1 次)**
-    *   **优化前**：打开文档时，分别对“目录”和“大纲”进行独立的SQL查询。如果存在相关块，还会触发后续的重复查询（查询属性、查询父块等），导致大量冗余数据库IO。
-    *   **优化后**：实施了 **“单次联合查询 (Single Union Query)”** 策略。在文档加载时，仅执行 **1次** SQL 查询即可同时检索目录和大纲的存在状态。
-    *   **智能参数透传**：查询结果（Block Info）直接透传给后续的更新函数 (`autoUpdateIndex/Outline`) 和底层服务 (`BlockService`)，彻底消除了深层调用中的重复 SQL 查表操作。
+**Total SQL Queries**: 3 (All checking for the same thing).
 
-2.  **配置系统重构 (内存级缓存)**
-    *   **优化前**：几乎每个操作（插入、更新、打开弹窗）都会触发 `await settings.load()`，导致频繁读取磁盘上的 `config.json` 文件，造成不必要的 I/O 开销。
-    *   **优化后**：
-        *   实现了 **内存常驻配置**。配置仅在插件启动 (`onload`) 或检测到外部变更 (`onDataChanged`) 时加载。
-        *   所有运行时读取操作（如自动更新判断）直接从内存获取，**延时几乎为零**。
+## Proposed Optimization
+Only proceed with the update logic if the specific block was actually found in the initial combined query. The `autoUpdate...` functions are designed to *update existing* blocks, so calling them when nothing exists is redundant.
 
-3.  **逻辑闭环与稳定性**
-    *   **完善卸载逻辑**：新增 `uninstall` 方法，确保插件卸载时自动清理 `config.json`，不残留垃圾文件。
-    *   **IAL 解析优化**：引入纯文本解析工具 `getAttrFromIAL`，无需调用内核 API 即可解析属性，进一步降低了通信开销。
-    *   **规范化**：修正了 `package.json` 和 `plugin.json` 中的 Author 信息 (Szerelem0617) 及 License (MIT 2026)，确保了开源协议的合规性。
-    *   **构建修复**：解决了 `src/shared/api-client/index.ts` 中因代码替换残留导致的语法错误，确保项目能正常构建。
-    *   **初始化修复**：修复了 `initData` 中错误使用 `JSON.stringify` 导致新安装插件无法正确读取默认配置的问题。
+**Change in `src/events/protyle-event.ts`**:
+```typescript
+// ... query ...
+if (indexBlock) {
+    autoUpdateIndex(notebookId, path, parentId, indexBlock);
+}
+if (outlineBlock) {
+    autoUpdateOutline(parentId, outlineBlock);
+}
+```
 
-**结论**：本次更新将插件的运行效率提升至理论最优水平（最小化 IO 和 SQL），同时修复了潜在的逻辑漏洞，极大提升了用户在切换文档时的响应速度和插件的整体稳定性。
+## Result
+- **Scenario: Both exist**: 1 Query (unchanged, optimized path).
+- **Scenario: None exist**: 1 Query (vs 3 previously).
+- **Scenario: One exists**: 1 Query (vs 2 previously).
 
----
-
-# 插件图标演进建议 (Plugin Icon Proposals)
-
-鉴于您提到插件未来将涵盖 **“树状数据属性管理”** 和 **“可执行按钮(Executable Buttons)”** 等高级功能，现有的单一“列表”类图标可能无法完全承载其核心价值。
-
-以下为您构思的 4 种图标设计方向，旨在平衡“目录结构”的直观性与“功能执行”的高级感：
-
-## 1. 方案一：智能结构 (The Smart Structure) —— **推荐**
-*   **视觉概念**：保留经典的“树状分支”或“层级列表”主体，但在右下角叠加一个微小的 **“播放 (Play)”** 三角形或 **“闪电 (Bolt)”** 符号。
-*   **设计隐喻**：
-    *   **树/列表** = 核心的大纲/目录功能。
-    *   **播放/闪电** = 代表“可执行”、“自动化”、“动态生成”。
-*   **适用性**：完美契合“可执行按钮”和“自动构建”的特性，让用户一眼看出这不是静止的文本，而是“活”的结构。
-
-## 2. 方案二：数据节点 (The Data Node)
-*   **视觉概念**：类似于 **“思维导图节点 (Mindmap Node)”** 或 **“网络拓扑图”**。中心是一个核心点，向外发散连接着带有“标签”状的子节点。
-*   **设计隐喻**：
-    *   **节点连接** = 强调“树状数据”的父子关系。
-    *   **标签/属性** = 暗示对“属性 (Attributes)”和“方法”的管理能力。
-*   **适用性**：如果未来的重心偏向于“属性管理”和“数据库化”，此图标更具极客感和专业感。
-
-## 3. 方案三：大纲控制台 (The Outline Console)
-*   **视觉概念**：一个标准的文档大纲图标，旁边融合一个 **“齿轮 (Gear)”** 或 **“控制滑块 (Sliders)”**。
-*   **设计隐喻**：
-    *   强调这是一个“管理器 (Manager)”。用户不仅仅是看大纲，更是在这里配置规则、定义行为。
-*   **适用性**：适合强调“管理面板”和“深度配置”的定位。
-
-## 4. 方案四：逻辑流 (The Logic Flow)
-*   **视觉概念**：类似于代码编辑器中的 **“代码块 (Code Brackets `{}` )”** 包裹着一个列表，或者是一个带有 **“流程箭头”** 的列表。
-*   **设计隐喻**：
-    *   将目录视为一种“逻辑流程”。
-    *   暗示这些条目可以被“编程”或“按顺序执行”。
-*   **适用性**：如果插件未来引入脚本化或工作流编排，此图标最具前瞻性。
-
-### 总结建议
-考虑到思源笔记现有的图标风格（Material Design 风格，简洁线条），**方案一 (智能结构)** 是最稳妥且效果最好的选择。
-*   它没有脱离用户对“目录插件”的固有认知（还是个列表/树）。
-*   增加的“播放/闪电”角标能有效传达“功能升级”和“可交互”的暗示，既不过于抽象，又突出了差异化。
+This strictly enforces the "Single Union Query" goal mentioned in documentation.
