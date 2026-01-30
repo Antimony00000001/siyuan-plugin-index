@@ -1,6 +1,7 @@
 import { autoUpdateIndex } from "../features/index/action";
 import { autoUpdateOutline } from "../features/outline/action";
 import { isMobile } from "../shared/utils";
+import { client } from "../shared/api-client";
 // import { settings } from "./settings";
 
 /**
@@ -8,7 +9,7 @@ import { isMobile } from "../shared/utils";
  * @param param0 事件细节
  * @returns void
  */
-export function updateIndex({ detail }: any) {
+export async function updateIndex({ detail }: any) {
     // console.log(detail);
     // console.log(detail.protyle.element.className);
     //如果不为手机端且为聚焦状态，就直接返回，否则查询更新
@@ -30,7 +31,26 @@ export function updateIndex({ detail }: any) {
     let path = detail.protyle.path;
     // 获取文档块id
     let parentId = detail.protyle.block.rootID;
+    
+    // Single query for both Index and Outline
+    let rs = await client.sql({
+        stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND (ial like '%custom-index-create%' OR ial like '%custom-outline-create%') order by updated desc limit 2`
+    });
+
+    let indexBlock = null;
+    let outlineBlock = null;
+
+    if (rs.data) {
+        for (const block of rs.data) {
+            if (block.ial.includes("custom-index-create")) {
+                indexBlock = block;
+            } else if (block.ial.includes("custom-outline-create")) {
+                outlineBlock = block;
+            }
+        }
+    }
+
     // 自动插入
-    autoUpdateIndex(notebookId,path,parentId);
-    autoUpdateOutline(parentId);
+    autoUpdateIndex(notebookId, path, parentId, indexBlock);
+    autoUpdateOutline(parentId, outlineBlock);
 }

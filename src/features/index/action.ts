@@ -1,5 +1,5 @@
 import { settings, CONFIG } from "../../core/settings";
-import { getDocid, i18n, plugin, confirmDialog } from "../../shared/utils";
+import { getDocid, i18n, plugin, confirmDialog, getAttrFromIAL } from "../../shared/utils";
 import { BlockService, client } from "../../shared/api-client";
 import { IndexQueue } from "../../shared/utils/index-queue";
 import { generateIndex, generateIndexAndOutline, queuePopAll } from "./generator";
@@ -119,21 +119,32 @@ export async function insertIndexAndOutlineAction(targetBlockId?: string) {
     }
 }
 
-export async function autoUpdateIndex(notebookId: string, path: string, parentId: string) {
-    await settings.load();
+export async function autoUpdateIndex(notebookId: string, path: string, parentId: string, existingBlock?: any) {
+    // await settings.load();
     console.log("[IndexPlugin] Auto-updating index for doc:", parentId);
 
-    let rs = await client.sql({
-        stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-index-create%' order by updated desc limit 1`
-    });
+    let id, ialStr;
 
-    if (rs.data[0]?.id != undefined) {
-        let ial = await client.getBlockAttrs({ id: rs.data[0].id });
-        let str = ial.data["custom-index-create"];
+    if (existingBlock) {
+        id = existingBlock.id;
+        ialStr = existingBlock.ial;
+    } else {
+        let rs = await client.sql({
+            stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-index-create%' order by updated desc limit 1`
+        });
+        if (rs.data[0]?.id != undefined) {
+            existingBlock = rs.data[0];
+            id = rs.data[0].id;
+            ialStr = rs.data[0].ial;
+        }
+    }
+
+    if (id != undefined) {
+        let str = getAttrFromIAL(ialStr, "custom-index-create");
         
         let localSettings: any = {};
         try {
-            localSettings = JSON.parse(str);
+            if (str) localSettings = JSON.parse(str);
         } catch (e) {
             console.error("Error parsing settings", e);
         }
@@ -154,15 +165,14 @@ export async function autoUpdateIndex(notebookId: string, path: string, parentId
         let data = queuePopAll(indexQueue, "");
 
         if (data != '') {
-            // Note: Auto update uses insertDataAfter in legacy.
-            // BlockService.insertOrUpdate handles update correctly.
-            // We pass the same attr name/value to preserve it.
             await BlockService.insertOrUpdate(
                 parentId,
                 data,
                 "custom-index-create",
                 plugin.data[CONFIG],
-                "index"
+                "index",
+                undefined,
+                existingBlock // Pass existing block info to skip SQL in BlockService
             );
         }
     }

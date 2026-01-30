@@ -1,6 +1,6 @@
 import { client, BlockService } from "../../shared/api-client";
 import { getBlocksData, collectOutlineIds, requestGetDocOutline } from "../../shared/api-client/query";
-import { getDocid, i18n, plugin, confirmDialog } from "../../shared/utils";
+import { getDocid, i18n, plugin, confirmDialog, getAttrFromIAL } from "../../shared/utils";
 import { extractAnchors, isValidSeparator } from "../../shared/utils/anchor-utils";
 import { settings, CONFIG } from "../../core/settings";
 import { generateOutlineMarkdown } from "./generator";
@@ -82,20 +82,32 @@ export async function insertOutlineAction(targetBlockId?: string) {
     }
 }
 
-export async function autoUpdateOutline(parentId: string) {
-    await settings.load();
+export async function autoUpdateOutline(parentId: string, existingBlock?: any) {
+    // await settings.load();
     console.log("[IndexPlugin] Auto-updating outline for doc:", parentId);
 
-    let rs = await client.sql({
-        stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-outline-create%' order by updated desc limit 1`
-    });
+    let id, ialStr, markdown;
 
-    if (rs.data[0]?.id != undefined) {
-        let ial = await client.getBlockAttrs({ id: rs.data[0].id });
+    if (existingBlock) {
+        id = existingBlock.id;
+        ialStr = existingBlock.ial;
+        markdown = existingBlock.markdown;
+    } else {
+        let rs = await client.sql({
+            stmt: `SELECT * FROM blocks WHERE root_id = '${parentId}' AND ial like '%custom-outline-create%' order by updated desc limit 1`
+        });
+        if (rs.data[0]?.id != undefined) {
+             existingBlock = rs.data[0];
+             id = rs.data[0].id;
+             ialStr = rs.data[0].ial;
+             markdown = rs.data[0].markdown;
+        }
+    }
 
+    if (id != undefined) {
         let existingAnchors = new Map<string, string>();
-        if (rs.data[0].markdown) {
-            existingAnchors = extractAnchors(rs.data[0].markdown);
+        if (markdown) {
+            existingAnchors = extractAnchors(markdown);
             for (const [id, anchor] of existingAnchors) {
                 if (!isValidSeparator(anchor)) {
                     existingAnchors.delete(id);
@@ -103,10 +115,10 @@ export async function autoUpdateOutline(parentId: string) {
             }
         }
 
-        let str = ial.data["custom-outline-create"];
+        let str = getAttrFromIAL(ialStr, "custom-outline-create");
         let localSettings: any = {};
         try {
-            localSettings = JSON.parse(str);
+            if (str) localSettings = JSON.parse(str);
         } catch (e) {
             console.error("Failed to parse settings", e);
         }
@@ -134,7 +146,9 @@ export async function autoUpdateOutline(parentId: string) {
                 data,
                 "custom-outline-create",
                 plugin.data[CONFIG],
-                "outline"
+                "outline",
+                undefined,
+                existingBlock // Pass existing block info
             );
         }
     }

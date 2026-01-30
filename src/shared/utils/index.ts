@@ -74,3 +74,17 @@ export function getDocid() {
     else
         return document.querySelector('.layout__wnd--active .protyle.fn__flex-1:not(.fn__none) .protyle-background')?.getAttribute("data-node-id");
 }
+
+export function getAttrFromIAL(ial: string, attrName: string): string | null {
+    if (!ial) return null;
+    // Match attr="value"
+    // Value can be anything except double quote, but internal quotes are escaped as &quot;
+    // Regex: attrName="([^"]*)"
+    const regex = new RegExp(`${attrName}="([^"]*)"`);
+    const match = ial.match(regex);
+    if (match && match[1]) {
+        // Unescape &quot; to "
+        return match[1].replace(/&quot;/g, '"');
+    }
+    return null;
+}
